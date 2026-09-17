@@ -25,6 +25,9 @@
   --text-muted: #efede8;
 
   --border: #e2e8f0;
+
+  /* mobile navigation config */
+  --mobile-nav-height: 3.5rem;
 }
 
 .dark {

@@ -101,7 +101,7 @@ function MobileBottomNav() {
           z-50
 
           flex
-          h-14
+          h-(--mobile-nav-height)
           items-center
           justify-around
 
@@ -123,7 +123,7 @@ function MobileBottomNav() {
             className="
               group
               relative
-
+            
               flex
               size-11
               shrink-0
@@ -141,15 +141,13 @@ function MobileBottomNav() {
 
               transition-colors duration-200
 
-              hover:bg-slate-100
               hover:text-primary
 
-              dark:hover:bg-slate-800
             "
           >
             <MoreHorizontal
               className="
-                size-5
+                size-4
                 transition-colors
                 group-hover:text-primary
               "
