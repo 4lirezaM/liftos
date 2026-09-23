@@ -33,6 +33,8 @@ import {
 
 // Progress
 import { ProgressPage } from "../../features/progress";
+import ExercisesPage from "../../features/exercises/pages/ExercisesPage.jsx";
+import ProgramsLayout from "../../features/programs/layout/ProgramsLayout.jsx";
 
 export const router = createBrowserRouter([
   {
@@ -75,11 +77,17 @@ export const router = createBrowserRouter([
               // Programs
               {
                 path: "programs",
+                element: <ProgramsLayout />,
 
                 children: [
                   {
                     index: true,
                     element: <ProgramsPage />,
+                  },
+
+                  {
+                    path: "exercises",
+                    element: <ExercisesPage />,
                   },
 
                   {
