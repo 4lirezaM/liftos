@@ -1,24 +1,23 @@
+import ExerciseBadge from "./ExerciseBadge";
+
 export default function ExerciseListItem({ exercise, onClick }) {
-  const isSystemExercise = exercise.created_by === null;
+  const isPersonalExercise = exercise.created_by !== null;
   const isArchived = exercise.is_archived;
 
   return (
-    <button
-      type="button"
+    <article
       onClick={() => onClick?.(exercise)}
       className="
         group
-        flex w-full items-center gap-3
+        flex w-full
+        cursor-pointer
+        items-center gap-3
         border-b border-border
         px-4 py-3
         text-left
         transition-colors
         last:border-b-0
         hover:bg-foreground/[0.03]
-        focus-visible:outline-none
-        focus-visible:ring-2
-        focus-visible:ring-inset
-        focus-visible:ring-primary
 
         sm:gap-4
         sm:px-5
@@ -28,13 +27,11 @@ export default function ExerciseListItem({ exercise, onClick }) {
         lg:py-5
       "
     >
-      {/* Exercise Image */}
+      {/* Exercise Thumbnail */}
       <div
         className="
-          flex
-          h-14 w-14
+          h-12 w-12
           shrink-0
-          items-center justify-center
           overflow-hidden
           rounded-lg
           bg-foreground/[0.05]
@@ -44,46 +41,34 @@ export default function ExerciseListItem({ exercise, onClick }) {
           lg:h-20 lg:w-20
           lg:rounded-xl
         "
-        aria-hidden="true"
       >
-        {/* Temporary placeholder until exercise images are added */}
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          className="
-            h-6 w-6
-            text-foreground/40
-
-            sm:h-7 sm:w-7
-
-            lg:h-8 lg:w-8
-          "
-        >
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <circle cx="8.5" cy="8.5" r="1.5" />
-          <path d="m21 15-5-5L5 21" />
-        </svg>
+        {exercise.thumbnail_url ? (
+          <img
+            src={exercise.thumbnail_url}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="h-full w-full" />
+        )}
       </div>
 
       {/* Exercise Information */}
       <div className="min-w-0 flex-1">
         {/* Name */}
-        <div className="flex min-w-0 items-center gap-2">
-          <p
-            className="
-              min-w-0 truncate
-              text-sm font-semibold text-foreground
+        <p
+          className="
+            truncate
+            text-sm font-semibold text-foreground
 
-              sm:text-base
+            sm:text-base
 
-              lg:text-lg
-            "
-          >
-            {exercise.name}
-          </p>
-        </div>
+            lg:text-lg
+          "
+        >
+          {exercise.name}
+        </p>
 
         {/* Primary Muscle + Equipment */}
         <p
@@ -97,60 +82,37 @@ export default function ExerciseListItem({ exercise, onClick }) {
           {exercise.primary_muscle}
           {exercise.equipment && ` · ${exercise.equipment}`}
         </p>
+      </div>
 
-        {/* Movement Pattern — Tablet + Desktop */}
-        {exercise.movement_pattern && (
-          <p
-            className="
-              mt-1 hidden truncate
-              text-xs text-foreground/50
+      {/* Mobile / Tablet Status */}
+      <div
+        className="
+          flex
+          max-w-22.5
+          shrink-0
+          flex-col
+          items-end
+          gap-1.5
 
-              md:block
-              lg:text-sm
-            "
-          >
-            {exercise.movement_pattern}
-          </p>
-        )}
+          lg:hidden
+        "
+      >
+        {isPersonalExercise && <ExerciseBadge>Personal</ExerciseBadge>}
 
-        {/* Badges — Mobile + Tablet */}
-        <div className="mt-2 flex flex-wrap items-center gap-1.5 lg:hidden">
-          <span
-            className="
-              inline-flex items-center
-              rounded-full
-              border border-border
-              px-2 py-0.5
-              text-[10px] font-medium
-              text-foreground/60
-
-              sm:text-xs
-            "
-          >
-            {isSystemExercise ? "System" : "My"}
-          </span>
-
-          {isArchived && (
-            <span
-              className="
-                inline-flex items-center
-                rounded-full
-                border border-border
-                px-2 py-0.5
-                text-[10px] font-medium
-                text-foreground/60
-
-                sm:text-xs
-              "
-            >
-              Archived
-            </span>
-          )}
-        </div>
+        {isArchived && <ExerciseBadge>Archived</ExerciseBadge>}
       </div>
 
       {/* Desktop Information */}
-      <div className="hidden lg:flex lg:w-[34%] lg:items-center lg:gap-6">
+      <div
+        className="
+          hidden
+          min-w-0
+          lg:flex
+          lg:w-[34%]
+          lg:items-center
+          lg:gap-6
+        "
+      >
         {/* Secondary Muscles */}
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs text-foreground/50">Secondary</p>
@@ -162,60 +124,22 @@ export default function ExerciseListItem({ exercise, onClick }) {
           </p>
         </div>
 
-        {/* Exercise Type */}
+        {/* Body Region */}
         <div className="w-24 shrink-0">
-          <p className="truncate text-xs text-foreground/50">Type</p>
+          <p className="truncate text-xs text-foreground/50">Region</p>
 
           <p className="mt-1 truncate text-sm text-foreground/70">
-            {exercise.exercise_type || "—"}
+            {exercise.body_region || "—"}
           </p>
         </div>
 
-        {/* Source / Archived */}
+        {/* Personal / Archived */}
         <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-          <span
-            className="
-        inline-flex shrink-0 items-center
-        rounded-full
-        border border-border
-        px-2 py-1
-        text-xs font-medium
-        text-foreground/60
-      "
-          >
-            {isSystemExercise ? "System" : "My"}
-          </span>
+          {isPersonalExercise && <ExerciseBadge>Personal</ExerciseBadge>}
 
-          {isArchived && (
-            <span
-              className="
-          inline-flex shrink-0 items-center
-          rounded-full
-          border border-border
-          px-2 py-1
-          text-xs font-medium
-          text-foreground/60
-        "
-            >
-              Archived
-            </span>
-          )}
+          {isArchived && <ExerciseBadge>Archived</ExerciseBadge>}
         </div>
       </div>
-
-      {/* Actions */}
-      <div
-        className="
-          ml-2
-          shrink-0
-          text-foreground/50
-          transition-colors
-          group-hover:text-foreground/80
-        "
-        aria-hidden="true"
-      >
-        ⋮
-      </div>
-    </button>
+    </article>
   );
 }

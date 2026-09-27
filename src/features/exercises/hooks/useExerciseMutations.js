@@ -15,6 +15,12 @@ export const useExerciseMutations = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  const invalidateExercises = () => {
+    queryClient.invalidateQueries({
+      queryKey: EXERCISES_QUERY_KEY,
+    });
+  };
+
   const createMutation = useMutation({
     mutationFn: (exercise) =>
       createExercise({
@@ -22,11 +28,7 @@ export const useExerciseMutations = () => {
         userId: user?.id,
       }),
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: EXERCISES_QUERY_KEY,
-      });
-    },
+    onSuccess: invalidateExercises,
   });
 
   const updateMutation = useMutation({
@@ -36,11 +38,7 @@ export const useExerciseMutations = () => {
         userId: user?.id,
       }),
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: EXERCISES_QUERY_KEY,
-      });
-    },
+    onSuccess: invalidateExercises,
   });
 
   const archiveMutation = useMutation({
@@ -50,11 +48,7 @@ export const useExerciseMutations = () => {
         userId: user?.id,
       }),
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: EXERCISES_QUERY_KEY,
-      });
-    },
+    onSuccess: invalidateExercises,
   });
 
   const restoreMutation = useMutation({
@@ -64,11 +58,7 @@ export const useExerciseMutations = () => {
         userId: user?.id,
       }),
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: EXERCISES_QUERY_KEY,
-      });
-    },
+    onSuccess: invalidateExercises,
   });
 
   return {

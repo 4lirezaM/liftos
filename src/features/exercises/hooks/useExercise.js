@@ -7,9 +7,7 @@ const EXERCISE_QUERY_KEY = ["exercise"];
 export const useExercise = (exerciseId) => {
   return useQuery({
     queryKey: [...EXERCISE_QUERY_KEY, exerciseId],
-
     queryFn: () => getExerciseById(exerciseId),
-
     enabled: Boolean(exerciseId),
   });
 };

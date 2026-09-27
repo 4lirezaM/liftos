@@ -1,18 +1,18 @@
 import { supabase } from "@/config/supabase";
 import { useAuth } from "../../auth";
+import { getExerciseMediaUrl, getExerciseMediaUrls } from "@/config/storage";
 
 /**
  * Create a new exercise.
  *
  * @param {Object} exercise
  * @param {string} exercise.name
- * @param {string} [exercise.description]
  * @param {string} exercise.userId
- * @param {string} [exercise.primaryMuscle]
+ * @param {string} exercise.primaryMuscle
+ * @param {string} [exercise.description]
  * @param {string[]} [exercise.secondaryMuscles]
- * @param {string} [exercise.equipment]
- * @param {string} [exercise.exerciseType]
- * @param {string} [exercise.movementPattern]
+ * @param {string|null} [exercise.equipment]
+ * @param {string|null} [exercise.bodyRegion]
  *
  * @returns {Promise<Object>}
  */
@@ -20,14 +20,17 @@ export async function createExercise({
   name,
   description = null,
   userId,
-  primaryMuscle = null,
+  primaryMuscle,
   secondaryMuscles = [],
   equipment = null,
-  exerciseType = null,
-  movementPattern = null,
+  bodyRegion = null,
 }) {
   if (!userId) {
     throw new Error("User is not authenticated.");
+  }
+
+  if (!primaryMuscle) {
+    throw new Error("Primary muscle is required.");
   }
 
   const { data, error } = await supabase
@@ -39,8 +42,7 @@ export async function createExercise({
       primary_muscle: primaryMuscle,
       secondary_muscles: secondaryMuscles,
       equipment,
-      exercise_type: exerciseType,
-      movement_pattern: movementPattern,
+      body_region: bodyRegion,
     })
     .select()
     .single();
@@ -61,8 +63,6 @@ export async function createExercise({
  * - Primary muscle filtering
  * - Secondary muscle filtering
  * - Equipment filtering
- * - Exercise type filtering
- * - Movement pattern filtering
  * - Active / archived filtering
  * - Sorting
  * - Pagination
@@ -73,8 +73,6 @@ export async function createExercise({
  * @param {string[]} options.primaryMuscle
  * @param {string[]} options.secondaryMuscles
  * @param {string[]} options.equipment
- * @param {string[]} options.exerciseType
- * @param {string[]} options.movementPattern
  * @param {boolean} options.archived
  * @param {"name_asc" | "recently_added"} options.sort
  * @param {number} options.page
@@ -94,8 +92,6 @@ export async function getExercises({
   primaryMuscle = [],
   secondaryMuscles = [],
   equipment = [],
-  exerciseType = [],
-  movementPattern = [],
   archived = false,
   sort = "name_asc",
   page = 1,
@@ -108,8 +104,10 @@ export async function getExercises({
 
   // Search starts from 3 characters.
   // Search is case-insensitive and works anywhere inside the exercise name.
-  if (search.trim().length >= 3) {
-    query = query.ilike("name", `%${search.trim()}%`);
+  const normalizedSearch = search.trim();
+
+  if (normalizedSearch.length >= 3) {
+    query = query.ilike("name", `%${normalizedSearch}%`);
   }
 
   // Source filter.
@@ -134,9 +132,6 @@ export async function getExercises({
   }
 
   // Multiple values inside one filter use OR semantics.
-  // Example:
-  // primaryMuscle: ["chest", "back"]
-  // means chest OR back.
   if (primaryMuscle.length > 0) {
     query = query.in("primary_muscle", primaryMuscle);
   }
@@ -145,21 +140,9 @@ export async function getExercises({
     query = query.in("equipment", equipment);
   }
 
-  if (exerciseType.length > 0) {
-    query = query.in("exercise_type", exerciseType);
-  }
-
-  if (movementPattern.length > 0) {
-    query = query.in("movement_pattern", movementPattern);
-  }
-
   // secondary_muscles is a PostgreSQL text[] column.
-  // "ov" means the exercise's array overlaps with the selected values.
-  //
-  // Example:
-  // secondaryMuscles: ["triceps", "front_delts"]
-  //
-  // means the exercise must contain at least one of them.
+  // "overlaps" means at least one selected muscle exists
+  // in the exercise's secondary_muscles array.
   if (secondaryMuscles.length > 0) {
     query = query.overlaps("secondary_muscles", secondaryMuscles);
   }
@@ -181,18 +164,40 @@ export async function getExercises({
 
   query = query.range(from, to);
 
-  const { data, error, count } = await query;
+  const { data: preData, error, count } = await query;
 
   if (error) {
     throw error;
   }
 
+  const exercises = preData ?? [];
+
+  /*
+   * Exercise List only needs thumbnails.
+   * GIF/media URLs are intentionally NOT generated here.
+   *
+   * This avoids generating one signed GIF URL per exercise.
+   */
+  const thumbnailPaths = exercises
+    .map((exercise) => exercise.thumbnail_path)
+    .filter(Boolean);
+
+  const thumbnailUrls =
+    thumbnailPaths.length > 0 ? await getExerciseMediaUrls(thumbnailPaths) : {};
+
+  const data = exercises.map((exercise) => ({
+    ...exercise,
+    thumbnail_url: exercise.thumbnail_path
+      ? thumbnailUrls[exercise.thumbnail_path] ?? null
+      : null,
+  }));
+
   return {
-    data: data ?? [],
+    data,
     count: count ?? 0,
     page,
     limit,
-    hasMore: from + (data?.length ?? 0) < (count ?? 0),
+    hasMore: from + data.length < (count ?? 0),
   };
 }
 
@@ -205,9 +210,6 @@ export async function getExercises({
  * - Edit
  * - Archived Exercise Details
  *
- * RLS decides whether the current user is allowed to see
- * the requested exercise.
- *
  * Archived exercises are intentionally NOT filtered out here,
  * because archived exercises must still be viewable and restorable.
  *
@@ -215,6 +217,10 @@ export async function getExercises({
  * @returns {Promise<Object>}
  */
 export async function getExerciseById(id) {
+  if (!id) {
+    throw new Error("Exercise ID is required.");
+  }
+
   const { data, error } = await supabase
     .from("exercises")
     .select("*")
@@ -225,8 +231,20 @@ export async function getExerciseById(id) {
     throw error;
   }
 
-  return data;
+  const mediaPaths = [data.media_path, data.thumbnail_path].filter(Boolean);
+
+  const mediaUrls =
+    mediaPaths.length > 0 ? await getExerciseMediaUrls(mediaPaths) : {};
+
+  return {
+    ...data,
+    media_url: data.media_path ? mediaUrls[data.media_path] ?? null : null,
+    thumbnail_url: data.thumbnail_path
+      ? mediaUrls[data.thumbnail_path] ?? null
+      : null,
+  };
 }
+
 /**
  * Update an existing exercise.
  *
@@ -237,11 +255,10 @@ export async function getExerciseById(id) {
  * @param {string} options.userId
  * @param {string} [options.name]
  * @param {string|null} [options.description]
- * @param {string|null} [options.primaryMuscle]
+ * @param {string} [options.primaryMuscle]
  * @param {string[]} [options.secondaryMuscles]
  * @param {string|null} [options.equipment]
- * @param {string|null} [options.exerciseType]
- * @param {string|null} [options.movementPattern]
+ * @param {string|null} [options.bodyRegion]
  *
  * @returns {Promise<Object>}
  */
@@ -253,8 +270,7 @@ export async function updateExercise({
   primaryMuscle,
   secondaryMuscles,
   equipment,
-  exerciseType,
-  movementPattern,
+  bodyRegion,
 }) {
   if (!userId) {
     throw new Error("User is not authenticated.");
@@ -286,12 +302,12 @@ export async function updateExercise({
     updates.equipment = equipment;
   }
 
-  if (exerciseType !== undefined) {
-    updates.exercise_type = exerciseType;
+  if (bodyRegion !== undefined) {
+    updates.body_region = bodyRegion;
   }
 
-  if (movementPattern !== undefined) {
-    updates.movement_pattern = movementPattern;
+  if (Object.keys(updates).length === 0) {
+    throw new Error("No fields to update.");
   }
 
   const { data, error } = await supabase
@@ -308,6 +324,7 @@ export async function updateExercise({
 
   return data;
 }
+
 /**
  * Archive an exercise.
  *

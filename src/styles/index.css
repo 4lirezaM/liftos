@@ -77,6 +77,18 @@
   --color-text-muted: var(--text-muted);
 
   --color-border: var(--border);
+
+  --animate-skeleton-shimmer: skeleton-shimmer 1.8s ease-in-out infinite;
+
+  @keyframes skeleton-shimmer {
+    0% {
+      transform: translateX(0);
+    }
+
+    100% {
+      transform: translateX(300%);
+    }
+  }
 }
 /* ===== جلوگیری از Layout Shift هنگام ظاهر شدن اسکرول‌بار ===== */
 html {

@@ -1,5 +1,10 @@
+import { useState } from "react";
+
 import { useExercises } from "../hooks/useExercises";
+import { useExercise } from "../hooks/useExercise";
+
 import ExerciseList from "../components/exerciselist/ExerciseList";
+import ExerciseModal from "../components/ExerciseModal";
 
 export default function ExercisesPage() {
   const {
@@ -12,10 +17,17 @@ export default function ExercisesPage() {
     isFetchingNextPage,
   } = useExercises();
 
+  const [selectedExerciseId, setSelectedExerciseId] = useState(null);
+
+  const { data: selectedExercise, isLoading: isLoadingExercise } =
+    useExercise(selectedExerciseId);
+
   const exercises = data?.pages.flatMap((page) => page.data) ?? [];
 
   const handleExerciseClick = (exercise) => {
-    console.log("Selected exercise:", exercise);
+    setSelectedExerciseId((currentId) =>
+      currentId === exercise.id ? null : exercise.id
+    );
   };
 
   if (isLoading) {
@@ -49,6 +61,13 @@ export default function ExercisesPage() {
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
         onLoadMore={fetchNextPage}
+      />
+
+      <ExerciseModal
+        isOpen={Boolean(selectedExerciseId)}
+        onClose={() => setSelectedExerciseId(null)}
+        exercise={selectedExercise}
+        isLoading={isLoadingExercise}
       />
     </section>
   );
