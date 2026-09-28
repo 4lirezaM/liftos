@@ -11,8 +11,8 @@ const ExerciseContent = ({ exercise }) => {
             src={exercise.media_url}
             alt={exercise.name}
             className="
-              h-[240px]
-              w-[240px]
+              h-60
+              w-60
               rounded-xl
               object-cover
             "
@@ -55,9 +55,18 @@ const ExerciseContent = ({ exercise }) => {
       {/* Main Content */}
       <div className="space-y-6 px-1 pb-6 pt-5">
         {/* Header */}
-        <div>
+        <header>
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-semibold text-foreground sm:text-2xl">
+            <h2
+              className="
+                text-xl
+                font-semibold
+                leading-tight
+                tracking-tight
+                text-foreground
+                sm:text-2xl
+              "
+            >
               {exercise.name}
             </h2>
 
@@ -77,25 +86,41 @@ const ExerciseContent = ({ exercise }) => {
             )}
           </div>
 
-          <p className="mt-2 text-sm text-foreground/60">
+          <p className="mt-1.5 text-sm text-foreground/55">
             {exercise.primary_muscle}
             {exercise.equipment && ` · ${exercise.equipment}`}
           </p>
-        </div>
+        </header>
 
         {/* Exercise Details */}
-        <div className="grid grid-cols-2 gap-3">
-          <DetailItem label="Primary muscle" value={exercise.primary_muscle} />
+        <section>
+          <h3 className="mb-3 text-sm font-semibold text-foreground">
+            Exercise details
+          </h3>
 
-          <DetailItem label="Body region" value={exercise.body_region} />
+          <div
+            className="
+              overflow-hidden
+              rounded-xl
+              border border-border
+            "
+          >
+            <DetailItem
+              label="Primary muscle"
+              value={exercise.primary_muscle}
+            />
 
-          <DetailItem label="Equipment" value={exercise.equipment} />
+            <DetailItem label="Body region" value={exercise.body_region} />
 
-          <DetailItem
-            label="Source"
-            value={isPersonalExercise ? "My Exercise" : "System"}
-          />
-        </div>
+            <DetailItem label="Equipment" value={exercise.equipment} />
+
+            <DetailItem
+              label="Source"
+              value={isPersonalExercise ? "My Exercise" : "System"}
+              isLast
+            />
+          </div>
+        </section>
 
         {/* Secondary Muscles */}
         {exercise.secondary_muscles?.length > 0 && (
@@ -109,13 +134,12 @@ const ExerciseContent = ({ exercise }) => {
                 <span
                   key={muscle}
                   className="
-                    rounded-lg
-                    border
-                    border-border
-                    bg-foreground/[0.03]
-                    px-3 py-1.5
+                    rounded-md
+                    border border-border
+                    bg-foreground/[0.02]
+                    px-2.5 py-1.5
                     text-xs
-                    text-foreground/70
+                    text-foreground/65
                   "
                 >
                   {muscle}
@@ -150,21 +174,33 @@ const ExerciseContent = ({ exercise }) => {
   );
 };
 
-const DetailItem = ({ label, value }) => {
+const DetailItem = ({ label, value, isLast = false }) => {
   return (
     <div
-      className="
-        rounded-xl
-        border border-border
-        bg-foreground/[0.02]
-        px-3.5 py-3
-      "
-    >
-      <p className="text-xs text-foreground/45">{label}</p>
+      className={`
+        flex
+        items-center
+        justify-between
+        gap-4
+        px-4
+        py-3
 
-      <p className="mt-1.5 truncate text-sm font-medium text-foreground/85">
+        ${!isLast ? "border-b border-border" : ""}
+      `}
+    >
+      <span className="shrink-0 text-sm text-foreground/50">{label}</span>
+
+      <span
+        className="
+          truncate
+          text-right
+          text-sm
+          font-medium
+          text-foreground/85
+        "
+      >
         {value || "—"}
-      </p>
+      </span>
     </div>
   );
 };
