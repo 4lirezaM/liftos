@@ -11,9 +11,14 @@ const SlideUpModal = ({ isOpen, onClose, children, className = "" }) => {
   useEffect(() => {
     if (isOpen) {
       setIsMounted(true);
-
       const animationFrame = requestAnimationFrame(() => {
-        setIsVisible(true);
+        const secondAnimationFrame = requestAnimationFrame(() => {
+          setIsVisible(true);
+        });
+
+        return () => {
+          cancelAnimationFrame(secondAnimationFrame);
+        };
       });
 
       return () => {
