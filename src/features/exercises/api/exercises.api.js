@@ -1,6 +1,6 @@
 import { supabase } from "@/config/supabase";
 import { useAuth } from "../../auth";
-import { getExerciseMediaUrl, getExerciseMediaUrls } from "@/config/storage";
+import { getExerciseMediaUrls } from "@/config/storage";
 
 /**
  * Create a new exercise.
@@ -73,7 +73,7 @@ export async function createExercise({
  * @param {string[]} options.primaryMuscle
  * @param {string[]} options.secondaryMuscles
  * @param {string[]} options.equipment
- * @param {boolean} options.archived
+ * @param {boolean | null} options.archived
  * @param {"name_asc" | "recently_added"} options.sort
  * @param {number} options.page
  * @param {number} options.limit
@@ -89,6 +89,8 @@ export async function createExercise({
 export async function getExercises({
   search = "",
   source = "all",
+
+  userId = null,
   primaryMuscle = [],
   secondaryMuscles = [],
   equipment = [],
@@ -97,10 +99,11 @@ export async function getExercises({
   page = 1,
   limit = 20,
 } = {}) {
-  let query = supabase
-    .from("exercises")
-    .select("*", { count: "exact" })
-    .eq("is_archived", archived);
+  let query = supabase.from("exercises").select("*", { count: "exact" });
+
+  if (archived !== null) {
+    query = query.eq("is_archived", archived);
+  }
 
   // Search starts from 3 characters.
   // Search is case-insensitive and works anywhere inside the exercise name.
@@ -116,19 +119,12 @@ export async function getExercises({
   if (source === "system") {
     query = query.is("created_by", null);
   }
-
   if (source === "my") {
-    const { user, userError } = useAuth();
-
-    if (userError) {
-      throw userError;
-    }
-
-    if (!user) {
+    if (!userId) {
       throw new Error("User is not authenticated.");
     }
 
-    query = query.eq("created_by", user.id);
+    query = query.eq("created_by", userId);
   }
 
   // Multiple values inside one filter use OR semantics.

@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { getExercises } from "../api/exercises.api";
 
@@ -16,13 +16,16 @@ export const useExercises = ({
   limit = 20,
 } = {}) => {
   const { user } = useAuth();
+  const debouncedSearch = useDebouncedValue(search, 300);
+  const userId = user?.id ?? null;
 
   return useInfiniteQuery({
     queryKey: [
       ...EXERCISES_QUERY_KEY,
       {
-        search,
+        search: debouncedSearch,
         source,
+        userId,
         primaryMuscle,
         secondaryMuscles,
         equipment,
@@ -34,8 +37,9 @@ export const useExercises = ({
 
     queryFn: ({ pageParam }) =>
       getExercises({
-        search,
+        search: debouncedSearch,
         source,
+        userId,
         primaryMuscle,
         secondaryMuscles,
         equipment,
@@ -55,6 +59,9 @@ export const useExercises = ({
       return lastPage.page + 1;
     },
 
-    enabled: source !== "my" || Boolean(user?.id),
+    enabled:
+      debouncedSearch.length >= 3 || debouncedSearch.length === 0
+        ? source !== "my" || Boolean(userId)
+        : false,
   });
 };
