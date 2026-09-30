@@ -19,26 +19,29 @@ function MobileBottomNav() {
       {/* More Panel */}
       {isMoreOpen && (
         <div
-          className="
-            fixed inset-0 z-overlay
-            flex items-end
-            bg-black/40
-          "
+          className={`
+          fixed inset-x-0 top-0
+          bottom-(--mobile-nav-height)
+          z-overlay
+          flex items-end
+          bg-black/40
+          transition-opacity duration-200
+          ${isMoreOpen ? "opacity-100" : "opacity-0"}
+        `}
           onClick={() => setIsMoreOpen(false)}
         >
           <div
-            className="
+            className={`
               relative z-modal
               w-full
               rounded-t-3xl
               bg-background
               p-5 pb-0
-              mb-14
-              shadow-xl
-
-              border-t
-              border-border
-            "
+              mb-0
+              border-t border-border
+              transition-transform duration-800 ease-out
+              ${isMoreOpen ? "translate-y-0" : "translate-y-full"}
+            `}
             onClick={(event) => event.stopPropagation()}
           >
             {/* Header */}
@@ -162,3 +165,4 @@ function MobileBottomNav() {
 }
 
 export default MobileBottomNav;
+ه;

@@ -206,6 +206,42 @@ html.dark .scrollbar-minimal::-webkit-scrollbar-thumb {
   --animate-fab-enter: fab-enter 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 /* LiftOS — Z-Index / Layering System */
+@utility z-base {
+  z-index: var(--z-base);
+}
+
+@utility z-sticky {
+  z-index: var(--z-sticky);
+}
+
+@utility z-navigation {
+  z-index: var(--z-navigation);
+}
+
+@utility z-fab {
+  z-index: var(--z-fab);
+}
+
+@utility z-popover {
+  z-index: var(--z-popover);
+}
+
+@utility z-notification {
+  z-index: var(--z-notification);
+}
+
+@utility z-overlay {
+  z-index: var(--z-overlay);
+}
+
+@utility z-modal {
+  z-index: var(--z-modal);
+}
+
+@utility z-critical {
+  z-index: var(--z-critical);
+}
+
 @theme {
   /*
    * ============================================================
