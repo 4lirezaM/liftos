@@ -90,7 +90,7 @@
     }
   }
 }
-/* ===== جلوگیری از Layout Shift هنگام ظاهر شدن اسکرول‌بار ===== */
+/* ===== Layout Shift ===== */
 html {
   background-color: var(--color-background);
 }

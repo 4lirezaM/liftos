@@ -264,28 +264,28 @@ const ExerciseContent = ({ exercise }) => {
                   {isRestoring ? "Restoring..." : "Restore Exercise"}
                 </button>
               )}
+              <button
+                type="button"
+                onClick={handleEdit}
+                className={[
+                  "flex min-h-11 w-full items-center justify-center gap-2",
+                  "cursor-pointer rounded-lg border",
+                  "border-border bg-surface",
+                  "px-4 py-2.5",
+                  "text-sm font-medium text-foreground",
+                  "transition-colors duration-200",
+                  "hover:border-primary/40 hover:bg-primary/10 hover:text-primary",
+                  "active:border-primary/60 active:bg-primary/15",
+                  "focus-visible:outline-none",
+                  "focus-visible:ring-2 focus-visible:ring-primary/40",
+                  "disabled:cursor-not-allowed disabled:opacity-50",
+                  "sm:w-auto",
+                ].join(" ")}
+              >
+                Edit Exercise
+              </button>
             </>
           )}
-          <button
-            type="button"
-            onClick={handleEdit}
-            className={[
-              "flex min-h-11 w-full items-center justify-center gap-2",
-              "cursor-pointer rounded-lg border",
-              "border-border bg-surface",
-              "px-4 py-2.5",
-              "text-sm font-medium text-foreground",
-              "transition-colors duration-200",
-              "hover:border-primary/40 hover:bg-primary/10 hover:text-primary",
-              "active:border-primary/60 active:bg-primary/15",
-              "focus-visible:outline-none",
-              "focus-visible:ring-2 focus-visible:ring-primary/40",
-              "disabled:cursor-not-allowed disabled:opacity-50",
-              "sm:w-auto",
-            ].join(" ")}
-          >
-            Edit Exercise
-          </button>
         </div>
       </div>
       <ExerciseFormModal
