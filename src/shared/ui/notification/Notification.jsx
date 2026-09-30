@@ -11,9 +11,16 @@ export function Notification({
   message,
   duration = 5000,
   onClose,
+
+  // Optional action
+  actionLabel,
+  onAction,
+
   showCloseButton = true,
 }) {
   const config = notificationConfig[type] ?? notificationConfig.info;
+
+  const hasAction = Boolean(actionLabel && onAction);
 
   useEffect(() => {
     if (!open || duration <= 0) return;
@@ -29,22 +36,25 @@ export function Notification({
 
   if (!open) return null;
 
+  const handleAction = () => {
+    onAction?.();
+    onClose();
+  };
+
   return (
     <article
       role="alert"
       className="
         pointer-events-auto
+        relative
         w-full
         overflow-hidden
-        rounded-2xl
-        border
-        border-slate-200
+        rounded-md
         bg-white
         text-slate-900
         shadow-xl
         shadow-slate-950/10
 
-        dark:border-white/10
         dark:bg-[#111A26]
         dark:text-white
         dark:shadow-black/30
@@ -73,6 +83,28 @@ export function Notification({
               {message}
             </p>
           )}
+
+          {hasAction && (
+            <button
+              type="button"
+              onClick={handleAction}
+              className="
+                mt-2
+                text-sm
+                font-semibold
+                text-primary
+                transition-opacity
+                hover:opacity-80
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-primary/50
+                focus-visible:ring-offset-2
+                focus-visible:ring-offset-background
+              "
+            >
+              {actionLabel}
+            </button>
+          )}
         </div>
 
         {/* Close */}
@@ -94,6 +126,9 @@ export function Notification({
               hover:text-slate-700
               dark:hover:bg-white/5
               dark:hover:text-white
+              focus-visible:outline-none
+              focus-visible:ring-2
+              focus-visible:ring-primary/50
             "
           >
             <X className="size-4" strokeWidth={2} aria-hidden="true" />
@@ -103,9 +138,9 @@ export function Notification({
 
       {/* Progress */}
       {duration > 0 && (
-        <div className="h-0.5 w-full bg-slate-100 dark:bg-white/5">
+        <div className="h-1 w-full bg-transparent">
           <div
-            className={`h-full ${config.progressClass}`}
+            className={`h-full origin-left ${config.progressClass}`}
             style={{
               animation: `notification-progress ${duration}ms linear forwards`,
             }}

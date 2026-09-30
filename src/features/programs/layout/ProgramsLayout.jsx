@@ -12,7 +12,7 @@ export default function ProgramsLayout() {
       <nav
         aria-label="Programs navigation"
         className="
-          fixed inset-x-0 top-0 z-40
+          fixed inset-x-0 top-0  z-navigation
           border-b border-border
           bg-background
           md:static

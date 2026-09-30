@@ -10,6 +10,7 @@ import {
 } from "../api/exercises.api";
 
 const EXERCISES_QUERY_KEY = ["exercises"];
+const EXERCISE_QUERY_KEY = ["exercise"];
 
 export const useExerciseMutations = () => {
   const { user } = useAuth();
@@ -18,6 +19,12 @@ export const useExerciseMutations = () => {
   const invalidateExercises = () => {
     queryClient.invalidateQueries({
       queryKey: EXERCISES_QUERY_KEY,
+    });
+  };
+
+  const invalidateExercise = (exerciseId) => {
+    queryClient.invalidateQueries({
+      queryKey: [...EXERCISE_QUERY_KEY, exerciseId],
     });
   };
 
@@ -38,7 +45,10 @@ export const useExerciseMutations = () => {
         userId: user?.id,
       }),
 
-    onSuccess: invalidateExercises,
+    onSuccess: (_, variables) => {
+      invalidateExercises();
+      invalidateExercise(variables.id);
+    },
   });
 
   const archiveMutation = useMutation({
@@ -48,7 +58,10 @@ export const useExerciseMutations = () => {
         userId: user?.id,
       }),
 
-    onSuccess: invalidateExercises,
+    onSuccess: (_, variables) => {
+      invalidateExercises();
+      invalidateExercise(variables.id);
+    },
   });
 
   const restoreMutation = useMutation({
@@ -58,7 +71,10 @@ export const useExerciseMutations = () => {
         userId: user?.id,
       }),
 
-    onSuccess: invalidateExercises,
+    onSuccess: (_, variables) => {
+      invalidateExercises();
+      invalidateExercise(variables.id);
+    },
   });
 
   return {

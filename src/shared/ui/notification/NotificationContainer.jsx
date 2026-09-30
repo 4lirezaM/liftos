@@ -11,7 +11,7 @@ export function NotificationContainer({ notifications = [], onRemove }) {
         fixed
         inset-x-0
         bottom-0
-        z-50
+        z-notification
 
         flex
         flex-col-reverse
@@ -38,6 +38,8 @@ export function NotificationContainer({ notifications = [], onRemove }) {
           message={notification.message}
           duration={notification.duration}
           showCloseButton={notification.showCloseButton}
+          actionLabel={notification.actionLabel}
+          onAction={notification.onAction}
           onClose={() => onRemove(notification.id)}
         />
       ))}

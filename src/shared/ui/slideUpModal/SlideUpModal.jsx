@@ -85,7 +85,7 @@ const SlideUpModal = ({ isOpen, onClose, children, className = "" }) => {
       className={`
         fixed
         inset-0
-        z-50
+z-overlay
         flex
         items-end
         justify-center

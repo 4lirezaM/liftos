@@ -6,7 +6,7 @@ import { useExercise } from "../hooks/useExercise";
 import ExerciseSortMenu from "../components/sorting/ExerciseSortMenu";
 
 import ExerciseList from "../components/exerciselist/ExerciseList";
-import ExerciseModal from "../components/ExerciseModal";
+import ExerciseModal from "../components/ExerciseDetails/ExerciseModal";
 import ExerciseListSkeleton from "../components/exerciselist/ExerciseListSkeleton";
 import {
   DEFAULT_EXERCISE_FILTERS,
@@ -15,9 +15,14 @@ import {
 import ExerciseFilterModal from "../components/filters/ExerciseFilterModal";
 import ExerciseSearch from "../components/ExerciseSearch";
 import { ListFilter } from "lucide-react";
+import FloatingActionButton from "../../../shared/ui/floating-action-button/FloatingActionButton";
+import { Plus } from "lucide-react";
+import ExerciseFormModal from "../components/ExerciseForm/ExerciseFormModal";
 
 export default function ExercisesPage() {
   const [selectedExerciseId, setSelectedExerciseId] = useState(null);
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const [search, setSearch] = useState("");
 
@@ -73,17 +78,17 @@ export default function ExercisesPage() {
       [key]: value,
     }));
   };
-  const handleResetAll = () => {
-    setSearch("");
-    setFilters(DEFAULT_EXERCISE_FILTERS);
-    setSort(DEFAULT_EXERCISE_SORT);
 
-    setDraftFilters(DEFAULT_EXERCISE_FILTERS);
-  };
   const handleResetFilters = () => {
     setDraftFilters(DEFAULT_EXERCISE_FILTERS);
   };
+  const handleOpenCreate = () => {
+    setIsCreateModalOpen(true);
+  };
 
+  const handleCloseCreate = () => {
+    setIsCreateModalOpen(false);
+  };
   if (isError) {
     console.error("Failed to load exercises:", error);
 
@@ -135,6 +140,11 @@ export default function ExercisesPage() {
           exercise={selectedExercise}
           isLoading={isLoadingExercise}
         />
+        <ExerciseFormModal
+          isOpen={isCreateModalOpen}
+          mode="create"
+          onClose={handleCloseCreate}
+        />
         <ExerciseFilterModal
           isOpen={isFilterModalOpen}
           filters={draftFilters}
@@ -144,6 +154,7 @@ export default function ExercisesPage() {
           onCancel={handleCancelFilters}
         />
       </div>
+      <FloatingActionButton icon={Plus} onClick={handleOpenCreate} />
     </section>
   );
 }

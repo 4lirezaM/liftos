@@ -45,7 +45,7 @@ const ExerciseSortMenu = ({ value, onChange, className }) => {
         <div
           role="menu"
           className={[
-            "absolute right-0 z-20 mt-2 w-52",
+            "absolute right-0 z-popover mt-2 w-52",
             "rounded-lg border border-border",
             "bg-background p-1.5 shadow-lg",
           ].join(" ")}
