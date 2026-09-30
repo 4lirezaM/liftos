@@ -1,14 +1,20 @@
+import { useState } from "react";
+import ExerciseFormModal from "../ExerciseForm/ExerciseFormModal";
 import { useNotification } from "../../../../shared/ui/notification";
 import { useExerciseMutations } from "../../hooks/useExerciseMutations";
 import { Archive } from "lucide-react";
 import { ArchiveRestore } from "lucide-react";
 const ExerciseContent = ({ exercise }) => {
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const isPersonalExercise = exercise.created_by !== null;
   const isArchived = exercise.is_archived;
   const { notify } = useNotification();
   const { archiveExercise, isArchiving, restoreExercise, isRestoring } =
     useExerciseMutations();
 
+  const handleEdit = () => {
+    setIsEditOpen(true);
+  };
   const handleArchive = () => {
     archiveExercise(
       { id: exercise.id },
@@ -49,19 +55,16 @@ const ExerciseContent = ({ exercise }) => {
             "
           />
         ) : (
-          <div
+          <img
+            src="/personalExercisePic.jpg"
+            alt="personalExercisePic"
             className="
-              flex
-              aspect-video
-              w-full
-              items-center
-              justify-center
-              text-sm
-              text-foreground/40
+              h-60
+              w-60
+              rounded-xl
+              object-cover
             "
-          >
-            No preview available
-          </div>
+          />
         )}
 
         {isArchived && (
@@ -206,63 +209,91 @@ const ExerciseContent = ({ exercise }) => {
             </p>
           </section>
         )}
-        {isPersonalExercise && (
-          <>
-            {!isArchived ? (
-              <button
-                type="button"
-                onClick={handleArchive}
-                disabled={isArchiving}
-                className={[
-                  "flex min-h-11 w-full items-center justify-center gap-2",
-                  "cursor-pointer rounded-lg border",
-                  "border-amber-400/40 bg-amber-400/10",
-                  "px-4 py-2.5",
-                  "text-sm font-medium text-amber-400",
-                  "transition-colors duration-200",
-                  "hover:border-amber-400/70 hover:bg-amber-400/20",
-                  "active:border-amber-400 active:bg-amber-400/30",
-                  "focus-visible:outline-none",
-                  "focus-visible:ring-2 focus-visible:ring-amber-400/50",
-                  "disabled:cursor-not-allowed disabled:opacity-50",
-                  "sm:w-auto",
-                ].join(" ")}
-              >
-                <Archive className="size-4 shrink-0" aria-hidden="true" />
+        <div className="flex gap-2">
+          {isPersonalExercise && (
+            <>
+              {!isArchived ? (
+                <button
+                  type="button"
+                  onClick={handleArchive}
+                  disabled={isArchiving}
+                  className={[
+                    "flex min-h-11 w-full items-center justify-center gap-2",
+                    "cursor-pointer rounded-lg border",
+                    "border-amber-400/40 bg-amber-400/10",
+                    "px-4 py-2.5",
+                    "text-sm font-medium text-amber-400",
+                    "transition-colors duration-200",
+                    "hover:border-amber-400/70 hover:bg-amber-400/20",
+                    "active:border-amber-400 active:bg-amber-400/30",
+                    "focus-visible:outline-none",
+                    "focus-visible:ring-2 focus-visible:ring-amber-400/50",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
+                    "sm:w-auto",
+                  ].join(" ")}
+                >
+                  <Archive className="size-4 shrink-0" aria-hidden="true" />
 
-                {isArchiving ? "Archiving..." : "Archive Exercise"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleRestore}
-                disabled={isRestoring}
-                className={[
-                  "flex min-h-11 w-full items-center justify-center gap-2",
-                  "cursor-pointer rounded-lg border",
-                  "border-primary/40 bg-primary/10",
-                  "px-4 py-2.5",
-                  "text-sm font-medium text-primary",
-                  "transition-colors duration-200",
-                  "hover:border-primary/60 hover:bg-primary/15",
-                  "active:bg-primary/20",
-                  "focus-visible:outline-none",
-                  "focus-visible:ring-2 focus-visible:ring-primary/50",
-                  "disabled:cursor-not-allowed disabled:opacity-50",
-                  "sm:w-auto",
-                ].join(" ")}
-              >
-                <ArchiveRestore
-                  className="size-4 shrink-0"
-                  aria-hidden="true"
-                />
+                  {isArchiving ? "Archiving..." : "Archive Exercise"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleRestore}
+                  disabled={isRestoring}
+                  className={[
+                    "flex min-h-11 w-full items-center justify-center gap-2",
+                    "cursor-pointer rounded-lg border",
+                    "border-primary/40 bg-primary/10",
+                    "px-4 py-2.5",
+                    "text-sm font-medium text-primary",
+                    "transition-colors duration-200",
+                    "hover:border-primary/60 hover:bg-primary/15",
+                    "active:bg-primary/20",
+                    "focus-visible:outline-none",
+                    "focus-visible:ring-2 focus-visible:ring-primary/50",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
+                    "sm:w-auto",
+                  ].join(" ")}
+                >
+                  <ArchiveRestore
+                    className="size-4 shrink-0"
+                    aria-hidden="true"
+                  />
 
-                {isRestoring ? "Restoring..." : "Restore Exercise"}
-              </button>
-            )}
-          </>
-        )}
+                  {isRestoring ? "Restoring..." : "Restore Exercise"}
+                </button>
+              )}
+            </>
+          )}
+          <button
+            type="button"
+            onClick={handleEdit}
+            className={[
+              "flex min-h-11 w-full items-center justify-center gap-2",
+              "cursor-pointer rounded-lg border",
+              "border-border bg-surface",
+              "px-4 py-2.5",
+              "text-sm font-medium text-foreground",
+              "transition-colors duration-200",
+              "hover:border-primary/40 hover:bg-primary/10 hover:text-primary",
+              "active:border-primary/60 active:bg-primary/15",
+              "focus-visible:outline-none",
+              "focus-visible:ring-2 focus-visible:ring-primary/40",
+              "disabled:cursor-not-allowed disabled:opacity-50",
+              "sm:w-auto",
+            ].join(" ")}
+          >
+            Edit Exercise
+          </button>
+        </div>
       </div>
+      <ExerciseFormModal
+        isOpen={isEditOpen}
+        mode="edit"
+        exercise={exercise}
+        onClose={() => setIsEditOpen(false)}
+      />
     </div>
   );
 };

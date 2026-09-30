@@ -20,7 +20,7 @@ function MobileBottomNav() {
       {isMoreOpen && (
         <div
           className="
-            fixed inset-0  z-overlay
+            fixed inset-0 z-overlay
             flex items-end
             bg-black/40
           "
@@ -28,6 +28,7 @@ function MobileBottomNav() {
         >
           <div
             className="
+              relative z-modal
               w-full
               rounded-t-3xl
               bg-background
@@ -57,11 +58,8 @@ function MobileBottomNav() {
                 className="
                   rounded-full
                   p-2
-
                   text-color
-
                   transition-colors
-
                   hover:bg-slate-100
                   dark:hover:bg-slate-800
                 "
@@ -71,9 +69,11 @@ function MobileBottomNav() {
             </div>
 
             <div
-              className="space-y-2 
-              max-h-[calc(100dvh-300px)]
-              overflow-y-auto  touch-pan-y
+              className="
+                space-y-2
+                max-h-[calc(100dvh-300px)]
+                overflow-y-auto
+                touch-pan-y
               "
             >
               {moreItems.map((item) => (
@@ -98,7 +98,7 @@ function MobileBottomNav() {
           bottom-0
           left-0
           right-0
-           z-navigation
+          z-navigation
 
           flex
           h-(--mobile-nav-height)
@@ -107,7 +107,6 @@ function MobileBottomNav() {
 
           border-t
           border-border
-
           bg-background
         "
       >
@@ -123,26 +122,18 @@ function MobileBottomNav() {
             className="
               group
               relative
-            
               flex
               size-11
               shrink-0
               flex-col
               items-center
               justify-center
-
               gap-0.5
-
               rounded-lg
-
               cursor-pointer
-
               text-color
-
               transition-colors duration-200
-
               hover:text-primary
-
             "
           >
             <MoreHorizontal
@@ -157,7 +148,6 @@ function MobileBottomNav() {
               className="
                 max-w-9
                 truncate
-
                 text-[9px]
                 font-medium
               "

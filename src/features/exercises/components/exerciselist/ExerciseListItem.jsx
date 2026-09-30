@@ -50,7 +50,13 @@ export default function ExerciseListItem({ exercise, onClick }) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="h-full w-full" />
+          <img
+            src="/personalExercisePic.jpg"
+            alt="personalExercisePic"
+            loading="lazy"
+            className="h-full w-full object-cover
+            "
+          />
         )}
       </div>
 
