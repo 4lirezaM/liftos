@@ -1,5 +1,4 @@
 import { supabase } from "@/config/supabase";
-import { useAuth } from "../../auth";
 import { getExerciseMediaUrls } from "@/config/storage";
 
 /**

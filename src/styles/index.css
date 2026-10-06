@@ -19,8 +19,9 @@
   --primary: var(--primary-500);
   /* Neutral */
   --background: #f7f6f3;
+  --background-muted: #efede8;
   --surface: #ffffff;
-
+  --foreground: #111827;
   --text: #111827;
   --text-muted: #efede8;
 
@@ -48,8 +49,9 @@
 
   /* Neutral */
   --background: #090f18;
-  --surface: #111827;
-
+  --background-muted: #111827;
+  --surface: #161e2b;
+  --foreground: #f8fafc;
   --text: #f8fafc;
   --text-muted: #94a3b8;
 
@@ -69,10 +71,10 @@
   --color-primary-700: var(--primary-700);
   --color-primary-800: var(--primary-800);
   --color-primary-900: var(--primary-900);
-
   --color-background: var(--background);
   --color-surface: var(--surface);
-
+  --color-background-muted: var(--background-muted);
+  --color-foreground: var(--foreground);
   --color-text: var(--text);
   --color-text-muted: var(--text-muted);
 
