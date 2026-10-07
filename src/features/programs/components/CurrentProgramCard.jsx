@@ -11,9 +11,6 @@ export default function CurrentProgramCard({
   isLoading = false,
   onClick,
 }) {
-  const programTypeImage = program.program_type
-    ? `/programtypes/${program.program_type}.jpg`
-    : null;
   if (isLoading) {
     return (
       <div className="overflow-hidden rounded-2xl border border-border bg-background">
@@ -68,6 +65,9 @@ export default function CurrentProgramCard({
       (option) => option.value === program.difficulty
     )?.label ?? "—";
 
+  const programTypeImage = program.program_type
+    ? `/programtypes/${program.program_type}.jpg`
+    : null;
   return (
     <article
       onClick={() => onClick?.(program)}
