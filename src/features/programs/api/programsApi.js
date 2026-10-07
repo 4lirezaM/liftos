@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/config/supabase";
 
 /**
  * Fetch programs owned by the current user.
@@ -80,6 +80,25 @@ export const getProgram = async (programId) => {
   return data;
 };
 
+/**
+ * Get the currently active program for the authenticated user.
+ *
+ * @returns {Promise<Object|null>}
+ */
+export const getActiveProgram = async () => {
+  const { data, error } = await supabase
+    .from("programs")
+    .select("*")
+    .eq("is_active", true)
+    .eq("is_archived", false)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
 /**
  * Create a new program.
  *

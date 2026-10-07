@@ -1,4 +1,4 @@
-export const PROGRAM_TYPES = [
+export const PROGRAM_TYPE_OPTIONS = [
   { value: "full_body", label: "Full Body" },
   { value: "upper_lower", label: "Upper / Lower" },
   { value: "push_pull_legs", label: "Push / Pull / Legs" },
@@ -7,17 +7,38 @@ export const PROGRAM_TYPES = [
   { value: "custom", label: "Custom" },
 ];
 
-export const DIFFICULTIES = [
-  { value: "beginner", label: "Beginner" },
-  { value: "intermediate", label: "Intermediate" },
-  { value: "advanced", label: "Advanced" },
+export const PROGRAM_DIFFICULTY_OPTIONS = [
+  {
+    value: "beginner",
+    label: "Beginner",
+  },
+  {
+    value: "intermediate",
+    label: "Intermediate",
+  },
+  {
+    value: "advanced",
+    label: "Advanced",
+  },
 ];
 
-export const PROGRAM_GOALS = [
-  { value: "hypertrophy", label: "Hypertrophy" },
-  { value: "strength", label: "Strength" },
-  { value: "fat_loss", label: "Fat Loss" },
-  { value: "general_fitness", label: "General Fitness" },
+export const PROGRAM_GOAL_OPTIONS = [
+  {
+    value: "hypertrophy",
+    label: "Hypertrophy",
+  },
+  {
+    value: "strength",
+    label: "Strength",
+  },
+  {
+    value: "fat_loss",
+    label: "Fat Loss",
+  },
+  {
+    value: "general_fitness",
+    label: "General Fitness",
+  },
 ];
 
 export const PROGRAM_LIMITS = {
