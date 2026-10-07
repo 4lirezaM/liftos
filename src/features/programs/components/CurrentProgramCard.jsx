@@ -11,6 +11,9 @@ export default function CurrentProgramCard({
   isLoading = false,
   onClick,
 }) {
+  const programTypeImage = program.program_type
+    ? `/programtypes/${program.program_type}.jpg`
+    : null;
   if (isLoading) {
     return (
       <div className="overflow-hidden rounded-2xl border border-border bg-background">
@@ -79,33 +82,119 @@ export default function CurrentProgramCard({
       "
     >
       {/* Accent header */}
-      <div className="relative overflow-hidden bg-primary-400 dark:bg-primary-200 px-5 py-6 text-foreground sm:px-6 sm:py-7 lg:px-7 lg:py-8">
-        <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/10" />
-        <div className="absolute -bottom-16 right-20 h-32 w-32 rounded-full bg-white/5" />
+      <div
+        className="
+    relative
+    overflow-hidden
+    bg-primary-400
+    text-foreground
+    dark:bg-primary-200
+  "
+      >
+        {/* Decorative circles */}
+        <div
+          className="
+      absolute
+      -right-10
+      -top-10
+      h-36
+      w-36
+      rounded-full
+      bg-white/10
+    "
+        />
 
-        <div className="relative flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15 sm:h-14 sm:w-14">
-            <Dumbbell size={23} strokeWidth={1.8} className="sm:h-6 sm:w-6" />
+        <div
+          className="
+      absolute
+      -bottom-16
+      right-20
+      h-32
+      w-32
+      rounded-full
+      bg-white/5
+    "
+        />
+
+        {/* Program Type Image */}
+        {programTypeImage && (
+          <div
+            className="
+        absolute
+        inset-y-0
+        left-0
+        z-10
+        aspect-[287/404]
+        h-full
+        overflow-hidden
+      "
+          >
+            <img
+              src={programTypeImage}
+              alt=""
+              className="h-full w-full object-contain"
+            />
           </div>
+        )}
 
+        <div
+          className="
+      relative
+      flex
+      min-h-[150px]
+      items-center
+      pl-[calc(150px*0.71+16px)]
+      pr-5
+      py-5
+
+      sm:min-h-[165px]
+      sm:pl-[calc(165px*0.71+20px)]
+      sm:pr-6
+      sm:py-6
+
+      lg:min-h-[180px]
+      lg:pl-[calc(180px*0.71+24px)]
+      lg:pr-7
+      lg:py-7
+    "
+        >
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full dark:bg-primary dark:text-black bg-primary-200 text-black px-2.5 py-1 text-[11px] font-semibold ">
+              <span
+                className="
+            rounded-full
+            bg-primary-200
+            px-2.5
+            py-1
+            text-[11px]
+            font-semibold
+            text-black
+            dark:bg-primary
+          "
+              >
                 Active
               </span>
 
               <span className="text-xs text-white/70">Current program</span>
             </div>
 
-            <h2 className="mt-2 break-words text-xl font-bold sm:text-2xl lg:text-3xl">
+            <h2
+              className="
+          mt-2
+          line-clamp-2
+          text-xl
+          font-bold
+          leading-6
+
+          sm:text-2xl
+          sm:leading-7
+
+          lg:text-3xl
+          lg:leading-8
+        "
+            >
               {program.name}
             </h2>
-
-            {program.description && (
-              <p className="mt-1.5 line-clamp-2 max-w-2xl text-sm leading-5 text-white/75 sm:text-[15px]">
-                {program.description}
-              </p>
-            )}
           </div>
         </div>
       </div>
