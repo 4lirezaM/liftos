@@ -34,7 +34,7 @@ export default function ProgramListItem({ program, onClick }) {
             items-center
             justify-center
             bg-primary
-            text-primary-foreground
+            text-slate-900
           "
         >
           <span
@@ -60,8 +60,8 @@ export default function ProgramListItem({ program, onClick }) {
           flex-1
           items-center
           gap-4
-          px-4
-          py-5
+          px-2
+          py-2
 
           sm:gap-5
           sm:px-5
@@ -76,18 +76,18 @@ export default function ProgramListItem({ program, onClick }) {
         {programTypeImage && (
           <div
             className="
-              h-16
-              w-16
-              shrink-0
-              overflow-hidden
-              rounded-lg
-              bg-foreground/[0.04]
+                 h-[88px]
+    w-[63px]
+    shrink-0
+    overflow-hidden
+    rounded-lg
+    bg-foreground/[0.04]
 
-              sm:h-20
-              sm:w-20
+    sm:h-[105px]
+    sm:w-[75px]
 
-              lg:h-24
-              lg:w-24
+    lg:h-[123px]
+    lg:w-[87px]
             "
           >
             <img
@@ -103,15 +103,18 @@ export default function ProgramListItem({ program, onClick }) {
           {/* Name */}
           <p
             className="
-              truncate
-              text-base
-              font-semibold
-              text-foreground
+      line-clamp-2
+      text-sm
+      font-semibold
+      leading-5
+      text-foreground
 
-              sm:text-lg
+      sm:text-base
+      sm:leading-5
 
-              lg:text-xl
-            "
+      lg:text-lg
+      lg:leading-6
+    "
           >
             {program.name}
           </p>
@@ -119,13 +122,18 @@ export default function ProgramListItem({ program, onClick }) {
           {/* Program Type + Goal */}
           <p
             className="
-              mt-1.5
-              truncate
-              text-xs
-              text-foreground/60
+      mt-1
+      line-clamp-2
+      text-[11px]
+      leading-4
+      text-foreground/60
 
-              sm:text-sm
-            "
+      sm:text-xs
+      sm:leading-4
+
+      lg:text-sm
+      lg:leading-5
+    "
           >
             {programType}
             {program.goal && ` · ${program.goal}`}
@@ -163,34 +171,35 @@ export default function ProgramListItem({ program, onClick }) {
         </div>
 
         {/* Frequency - visible on all sizes */}
-        <div
-          className="
-            w-16
-            shrink-0
-            text-right
+        <div className="shrink-0 text-center">
+          <p
+            className="
+      text-lg
+      font-semibold
+      leading-5
+      text-primary
 
-            sm:w-20
-
-            lg:w-24
-            lg:text-left
-          "
-        >
-          <p className="truncate text-[10px] text-foreground/50 sm:text-xs">
-            Frequency
+      sm:text-xl
+      sm:leading-6
+    "
+          >
+            {program.days_per_week ?? "—"}
           </p>
 
           <p
             className="
-              mt-1
-              truncate
-              text-xs
-              font-medium
-              text-foreground/70
-
-              sm:text-sm
-            "
+      mt-0.5
+      text-[10px]
+      font-medium
+      italic
+      leading-3
+      text-foreground/40
+              tracking-[0.18em]
+              [writing-mode:vertical-rl]
+              [text-orientation:mixed]
+    "
           >
-            {program.days_per_week ? `${program.days_per_week} days` : "—"}
+            /week
           </p>
         </div>
       </div>
