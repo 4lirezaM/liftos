@@ -24,7 +24,7 @@ export default function ProgramsLayout() {
       <nav
         aria-label="Programs navigation"
         className="
-          fixed inset-x-0 top-0 z-navigation
+         
           border-b border-border
           bg-background
           md:static
@@ -96,7 +96,7 @@ export default function ProgramsLayout() {
       </nav>
 
       {/* Content */}
-      <main className="pt-12 md:pt-0">
+      <main className=" pt-0">
         <div
           className="
             mx-auto w-full max-w-7xl

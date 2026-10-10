@@ -10,6 +10,7 @@ function AppLayout() {
         className="   min-w-0
                       flex-1
                       overflow-y-auto
+      scrollbar-gutter-stable
                       mb-(--mobile-nav-height)
                       md:mb-0"
       >
