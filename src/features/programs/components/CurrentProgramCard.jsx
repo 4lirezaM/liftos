@@ -14,18 +14,79 @@ export default function CurrentProgramCard({
   if (isLoading) {
     return (
       <div className="overflow-hidden rounded-2xl border border-border bg-background">
-        <div className="animate-pulse p-5 sm:p-6 lg:p-7">
-          <div className="h-4 w-28 rounded bg-foreground/10" />
+        {/* Skeleton Header */}
+        <div
+          className="
+            relative
+            min-h-[150px]
+            animate-pulse
+            bg-foreground/[0.04]
+  
+            sm:min-h-[165px]
+  
+            lg:min-h-[180px]
+          "
+        >
+          {/* Image placeholder */}
+          <div
+            className="
+              absolute
+              inset-y-0
+              left-0
+              aspect-[287/404]
+              h-full
+              bg-foreground/[0.08]
+            "
+          />
 
-          <div className="mt-4 h-8 w-2/3 rounded bg-foreground/10" />
+          <div
+            className="
+              flex
+              min-h-[150px]
+              items-center
+              pl-[calc(150px*0.71+16px)]
+              pr-5
+              py-5
+  
+              sm:min-h-[165px]
+              sm:pl-[calc(165px*0.71+20px)]
+              sm:pr-6
+              sm:py-6
+  
+              lg:min-h-[180px]
+              lg:pl-[calc(180px*0.71+24px)]
+              lg:pr-7
+              lg:py-7
+            "
+          >
+            <div className="min-w-0 flex-1">
+              {/* Status */}
+              <div className="h-6 w-16 rounded-full bg-foreground/10" />
 
-          <div className="mt-2 h-4 w-1/2 rounded bg-foreground/10" />
+              {/* Title */}
+              <div className="mt-3 h-6 w-3/4 rounded bg-foreground/10 sm:h-7 lg:h-8" />
+              <div className="mt-2 h-6 w-1/2 rounded bg-foreground/10 sm:h-7 lg:h-8" />
+            </div>
+          </div>
+        </div>
 
-          <div className="mt-7 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
+        {/* Skeleton Program Information */}
+        <div className="p-5 sm:p-6 lg:p-7">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
             <SkeletonDetail />
             <SkeletonDetail />
             <SkeletonDetail />
             <SkeletonDetail />
+          </div>
+
+          {/* Skeleton Frequency */}
+          <div className="mt-6 flex items-center justify-between border-t border-border pt-5">
+            <div>
+              <div className="h-3 w-28 rounded bg-foreground/10" />
+              <div className="mt-2 h-4 w-24 rounded bg-foreground/10" />
+            </div>
+
+            <div className="h-4 w-24 rounded bg-foreground/10" />
           </div>
         </div>
       </div>

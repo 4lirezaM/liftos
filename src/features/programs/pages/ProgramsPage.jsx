@@ -20,6 +20,7 @@ import FloatingActionButton from "../../../shared/ui/floating-action-button/Floa
 import { Plus } from "lucide-react";
 
 import { DEFAULT_PROGRAM_SORT } from "../constants/programFilters";
+import ProgramListSkeleton from "../components/programlist/ProgramListSkeleton.jsx";
 
 export default function ProgramsPage() {
   const [selectedProgramId, setSelectedProgramId] = useState(null);
@@ -30,9 +31,18 @@ export default function ProgramsPage() {
 
   const [sort, setSort] = useState(DEFAULT_PROGRAM_SORT);
 
-  const { data, isLoading, isError, error } = usePrograms({
+  const {
+    error,
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    isError,
+  } = usePrograms({
     search,
     sort,
+    archived: false,
   });
 
   const { data: activeProgram, isLoading: isLoadingActiveProgram } =
@@ -41,7 +51,7 @@ export default function ProgramsPage() {
   const { data: selectedProgram, isLoading: isLoadingProgram } =
     useProgram(selectedProgramId);
 
-  const programs = data?.data ?? [];
+  const programs = data?.pages.flatMap((page) => page.data) ?? [];
 
   const handleProgramClick = (program) => {
     setSelectedProgramId((currentId) =>
@@ -63,7 +73,7 @@ export default function ProgramsPage() {
     return (
       <div>
         <p>Couldn’t load programs.</p>
-        <p>{error.message}</p>
+        <p>{error?.message || null}</p>
       </div>
     );
   }
@@ -83,8 +93,17 @@ export default function ProgramsPage() {
         </div> */}
 
         {/* {isLoading && <ProgramListSkeleton />} */}
-
-        <ProgramList programs={programs} onProgramClick={handleProgramClick} />
+        {isLoading ? (
+          <ProgramListSkeleton />
+        ) : (
+          <ProgramList
+            programs={programs}
+            onProgramClick={handleProgramClick}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadMore={fetchNextPage}
+          />
+        )}
 
         {/* <ProgramModal
           isOpen={Boolean(selectedProgramId)}

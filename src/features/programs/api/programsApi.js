@@ -6,6 +6,7 @@ import { supabase } from "@/config/supabase";
  * @param {Object} options
  * @param {string} options.search
  * @param {'name_asc'|'recently_added'|'recently_updated'} options.sort
+ * @param {boolean} options.archived
  * @param {number} options.page
  * @param {number} options.limit
  */
@@ -21,40 +22,61 @@ export const getPrograms = async ({
 
   let query = supabase
     .from("programs")
-    .select("*", { count: "exact" })
+    .select(
+      `
+        id,
+        name,
+        goal,
+        difficulty,
+        program_type,
+        duration_weeks,
+        days_per_week,
+        is_active,
+        is_archived
+      `,
+      { count: "exact" }
+    )
     .eq("is_archived", archived);
 
   const trimmedSearch = search.trim();
 
-  if (trimmedSearch) {
+  if (trimmedSearch.length >= 3) {
     query = query.ilike("name", `%${trimmedSearch}%`);
   }
 
   switch (sort) {
     case "recently_added":
-      query = query.order("created_at", { ascending: false });
+      query = query.order("created_at", {
+        ascending: false,
+      });
       break;
 
     case "recently_updated":
-      query = query.order("updated_at", { ascending: false });
+      query = query.order("updated_at", {
+        ascending: false,
+      });
       break;
 
     case "name_asc":
     default:
-      query = query.order("name", { ascending: true });
+      query = query.order("name", {
+        ascending: true,
+      });
       break;
   }
 
   const { data, error, count } = await query.range(from, to);
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
 
   return {
-    data,
-    count,
+    data: data ?? [],
+    count: count ?? 0,
     page,
     limit,
-    hasMore: count !== null ? to + 1 < count : false,
+    hasMore: from + (data?.length ?? 0) < (count ?? 0),
   };
 };
 /**

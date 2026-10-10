@@ -1,39 +1,66 @@
 import { useQuery } from "@tanstack/react-query";
-
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { getPrograms } from "../../api/programsApi";
 import { useAuth } from "@/features/auth";
 
+const PROGRAMS_QUERY_KEY = ["programs"];
 /**
- * Fetch programs with search, sorting, filtering and pagination.
+ * Fetch programs with search, sorting, filtering and infinite pagination.
  *
  * @param {Object} options
  * @param {string} [options.search]
- * @param {string} [options.sort]
+ * @param {'name_asc'|'recently_added'|'recently_updated'} [options.sort]
  * @param {boolean} [options.archived]
- * @param {number} [options.page]
  * @param {number} [options.limit]
  *
- * @returns {Object} React Query query object.
+ * @returns {Object} Infinite query object for programs.
  */
 export const usePrograms = ({
   search = "",
   sort = "name_asc",
   archived = false,
-  page = 1,
-  limit = 20,
+  limit = 10,
 } = {}) => {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ["programs", user?.id, { search, sort, archived, page, limit }],
-    queryFn: () =>
-      getPrograms({
-        search,
+  const debouncedSearch = useDebouncedValue(search, 300);
+  const userId = user?.id ?? null;
+
+  return useInfiniteQuery({
+    queryKey: [
+      ...PROGRAMS_QUERY_KEY,
+      {
+        search: debouncedSearch,
+        userId,
         sort,
         archived,
-        page,
+        limit,
+      },
+    ],
+
+    queryFn: ({ pageParam }) =>
+      getPrograms({
+        search: debouncedSearch,
+        sort,
+        archived,
+        page: pageParam,
         limit,
       }),
-    enabled: Boolean(user?.id),
+
+    initialPageParam: 1,
+
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.hasMore) {
+        return undefined;
+      }
+
+      return lastPage.page + 1;
+    },
+
+    enabled:
+      debouncedSearch.length >= 3 || debouncedSearch.length === 0
+        ? Boolean(userId)
+        : false,
   });
 };
