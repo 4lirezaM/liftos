@@ -1,25 +1,33 @@
-import { useQuery } from "@tanstack/react-query";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
-import { getPrograms } from "../../api/programsApi";
+
 import { useAuth } from "@/features/auth";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+
+import { getPrograms } from "../../api/programsApi";
 
 const PROGRAMS_QUERY_KEY = ["programs"];
+
 /**
  * Fetch programs with search, sorting, filtering and infinite pagination.
  *
  * @param {Object} options
- * @param {string} [options.search]
- * @param {'name_asc'|'recently_added'|'recently_updated'} [options.sort]
- * @param {boolean} [options.archived]
- * @param {number} [options.limit]
+ * @param {string} [options.search=""]
+ * @param {string[]} [options.programType=[]]
+ * @param {string[]} [options.goal=[]]
+ * @param {string[]} [options.difficulty=[]]
+ * @param {boolean} [options.archived=false]
+ * @param {"name_asc"|"recently_added"|"recently_updated"} [options.sort="name_asc"]
+ * @param {number} [options.limit=10]
  *
- * @returns {Object} Infinite query object for programs.
+ * @returns {Object} Infinite query result.
  */
 export const usePrograms = ({
   search = "",
-  sort = "name_asc",
+  programType = [],
+  goal = [],
+  difficulty = [],
   archived = false,
+  sort = "name_asc",
   limit = 10,
 } = {}) => {
   const { user } = useAuth();
@@ -33,8 +41,11 @@ export const usePrograms = ({
       {
         search: debouncedSearch,
         userId,
-        sort,
+        programType,
+        goal,
+        difficulty,
         archived,
+        sort,
         limit,
       },
     ],
@@ -42,25 +53,21 @@ export const usePrograms = ({
     queryFn: ({ pageParam }) =>
       getPrograms({
         search: debouncedSearch,
-        sort,
+        userId,
+        programType,
+        goal,
+        difficulty,
         archived,
+        sort,
         page: pageParam,
         limit,
       }),
 
     initialPageParam: 1,
 
-    getNextPageParam: (lastPage) => {
-      if (!lastPage.hasMore) {
-        return undefined;
-      }
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.page + 1 : undefined,
 
-      return lastPage.page + 1;
-    },
-
-    enabled:
-      debouncedSearch.length >= 3 || debouncedSearch.length === 0
-        ? Boolean(userId)
-        : false,
+    enabled: Boolean(userId),
   });
 };

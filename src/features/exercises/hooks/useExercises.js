@@ -59,9 +59,6 @@ export const useExercises = ({
       return lastPage.page + 1;
     },
 
-    enabled:
-      debouncedSearch.length >= 3 || debouncedSearch.length === 0
-        ? source !== "my" || Boolean(userId)
-        : false,
+    enabled: Boolean(userId),
   });
 };

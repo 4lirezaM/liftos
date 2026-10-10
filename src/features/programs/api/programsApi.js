@@ -1,17 +1,24 @@
 import { supabase } from "@/config/supabase";
 
 /**
- * Fetch programs owned by the current user.
+ * Fetch programs with search, filters, sorting and pagination.
  *
  * @param {Object} options
- * @param {string} options.search
- * @param {'name_asc'|'recently_added'|'recently_updated'} options.sort
- * @param {boolean} options.archived
- * @param {number} options.page
- * @param {number} options.limit
+ * @param {string} [options.search=""]
+ * @param {string[]} [options.programType=[]]
+ * @param {string[]} [options.goal=[]]
+ * @param {string[]} [options.difficulty=[]]
+ * @param {"name_asc"|"recently_added"|"recently_updated"} [options.sort="name_asc"]
+ * @param {boolean} [options.archived=false]
+ * @param {number} [options.page=1]
+ * @param {number} [options.limit=20]
+ * @returns {Promise<{data: Object[], count: number, page: number, limit: number, hasMore: boolean}>}
  */
 export const getPrograms = async ({
   search = "",
+  programType = [],
+  goal = [],
+  difficulty = [],
   sort = "name_asc",
   archived = false,
   page = 1,
@@ -38,51 +45,71 @@ export const getPrograms = async ({
     )
     .eq("is_archived", archived);
 
+  // Search
   const trimmedSearch = search.trim();
 
   if (trimmedSearch.length >= 3) {
     query = query.ilike("name", `%${trimmedSearch}%`);
   }
+  // Filters
+  if (programType.length > 0) {
+    query = query.in("program_type", programType);
+  }
 
+  if (goal.length > 0) {
+    query = query.in("goal", goal);
+  }
+
+  if (difficulty.length > 0) {
+    query = query.in("difficulty", difficulty);
+  }
+
+  // Sorting
   switch (sort) {
     case "recently_added":
-      query = query.order("created_at", {
-        ascending: false,
-      });
+      query = query
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true });
       break;
 
     case "recently_updated":
-      query = query.order("updated_at", {
-        ascending: false,
-      });
+      query = query
+        .order("updated_at", { ascending: false })
+        .order("id", { ascending: true });
       break;
 
     case "name_asc":
     default:
-      query = query.order("name", {
-        ascending: true,
-      });
+      query = query
+        .order("name", { ascending: true })
+        .order("id", { ascending: true });
       break;
   }
 
+  // Pagination
   const { data, error, count } = await query.range(from, to);
 
   if (error) {
     throw error;
   }
 
+  const programs = data ?? [];
+  const totalCount = count ?? 0;
+
   return {
-    data: data ?? [],
-    count: count ?? 0,
+    data: programs,
+    count: totalCount,
     page,
     limit,
-    hasMore: from + (data?.length ?? 0) < (count ?? 0),
+    hasMore: from + programs.length < totalCount,
   };
 };
+
 /**
  * Fetch a single program by ID.
  *
  * @param {string} programId
+ * @returns {Promise<Object>}
  */
 export const getProgram = async (programId) => {
   if (!programId) {
@@ -103,7 +130,7 @@ export const getProgram = async (programId) => {
 };
 
 /**
- * Get the currently active program for the authenticated user.
+ * Get the currently active, non-archived program.
  *
  * @returns {Promise<Object|null>}
  */
@@ -121,19 +148,21 @@ export const getActiveProgram = async () => {
 
   return data;
 };
+
 /**
  * Create a new program.
  *
  * @param {Object} program
  * @param {string} program.created_by
  * @param {string} program.name
- * @param {string} [program.description]
- * @param {string} [program.goal]
- * @param {string} [program.difficulty]
- * @param {number} [program.duration_weeks]
- * @param {number} [program.days_per_week]
- * @param {string} [program.program_type]
- * @param {boolean} [program.is_active]
+ * @param {string|null} [program.description]
+ * @param {string|null} [program.goal]
+ * @param {string|null} [program.difficulty]
+ * @param {number|null} [program.duration_weeks]
+ * @param {number|null} [program.days_per_week]
+ * @param {string|null} [program.program_type]
+ * @param {boolean} [program.is_active=false]
+ * @returns {Promise<Object>}
  */
 export const createProgram = async ({
   created_by,
@@ -182,6 +211,7 @@ export const createProgram = async ({
  *
  * @param {string} programId
  * @param {Object} updates
+ * @returns {Promise<Object>}
  */
 export const updateProgram = async (programId, updates) => {
   if (!programId) {
@@ -217,9 +247,10 @@ export const updateProgram = async (programId, updates) => {
 };
 
 /**
- * Delete a program.
+ * Permanently delete a program.
  *
  * @param {string} programId
+ * @returns {Promise<boolean>}
  */
 export const deleteProgram = async (programId) => {
   if (!programId) {
@@ -237,8 +268,9 @@ export const deleteProgram = async (programId) => {
 
   return true;
 };
+
 /**
- * Archive a program and deactivate it if currently active.
+ * Archive a program and deactivate it.
  *
  * @param {string} programId
  * @returns {Promise<Object>}
@@ -258,12 +290,16 @@ export const archiveProgram = async (programId) => {
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
 
   return data;
 };
+
 /**
  * Activate a program and deactivate the user's previous active program.
+ * Requires the activate_program Supabase RPC function.
  *
  * @param {string} programId
  * @returns {Promise<Object>}
@@ -277,15 +313,15 @@ export const activateProgram = async (programId) => {
     p_program_id: programId,
   });
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
 
   return data;
 };
 
 /**
- * Restore an archived program.
- *
- * Restored programs remain inactive.
+ * Restore an archived program as inactive.
  *
  * @param {string} programId
  * @returns {Promise<Object>}
@@ -306,7 +342,13 @@ export const restoreProgram = async (programId) => {
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    throw new Error("Archived program not found");
+  }
 
   return data;
 };
