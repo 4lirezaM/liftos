@@ -18,6 +18,7 @@ import { ListFilter } from "lucide-react";
 import FloatingActionButton from "../../../shared/ui/floating-action-button/FloatingActionButton";
 import { Plus } from "lucide-react";
 import ExerciseFormModal from "../components/ExerciseForm/ExerciseFormModal";
+import ProgramsTabs from "@/features/programs/components/ProgramsTabs";
 
 export default function ExercisesPage() {
   const [selectedExerciseId, setSelectedExerciseId] = useState(null);
@@ -102,6 +103,7 @@ export default function ExercisesPage() {
 
   return (
     <section>
+      <ProgramsTabs activeTab="/programs/exercises" />
       <div className="flex flex-col space-y-4">
         <div className="flex w-full flex-col gap-2 sm:flex-row">
           <ExerciseSearch value={search} onChange={setSearch} />

@@ -1,4 +1,4 @@
-import { Dumbbell } from "lucide-react";
+import { Dumbbell, ArrowRight } from "lucide-react";
 
 import {
   PROGRAM_TYPE_OPTIONS,
@@ -7,90 +7,12 @@ import {
 } from "../constants/programOptions";
 
 export default function CurrentProgramCard({
+  onProgramClick,
   program,
   isLoading = false,
-  onClick,
 }) {
   if (isLoading) {
-    return (
-      <div className="overflow-hidden rounded-2xl border border-border bg-background">
-        {/* Skeleton Header */}
-        <div
-          className="
-            relative
-            min-h-[150px]
-            animate-pulse
-            bg-foreground/[0.04]
-  
-            sm:min-h-[165px]
-  
-            lg:min-h-[180px]
-          "
-        >
-          {/* Image placeholder */}
-          <div
-            className="
-              absolute
-              inset-y-0
-              left-0
-              aspect-[287/404]
-              h-full
-              bg-foreground/[0.08]
-            "
-          />
-
-          <div
-            className="
-              flex
-              min-h-[150px]
-              items-center
-              pl-[calc(150px*0.71+16px)]
-              pr-5
-              py-5
-  
-              sm:min-h-[165px]
-              sm:pl-[calc(165px*0.71+20px)]
-              sm:pr-6
-              sm:py-6
-  
-              lg:min-h-[180px]
-              lg:pl-[calc(180px*0.71+24px)]
-              lg:pr-7
-              lg:py-7
-            "
-          >
-            <div className="min-w-0 flex-1">
-              {/* Status */}
-              <div className="h-6 w-16 rounded-full bg-foreground/10" />
-
-              {/* Title */}
-              <div className="mt-3 h-6 w-3/4 rounded bg-foreground/10 sm:h-7 lg:h-8" />
-              <div className="mt-2 h-6 w-1/2 rounded bg-foreground/10 sm:h-7 lg:h-8" />
-            </div>
-          </div>
-        </div>
-
-        {/* Skeleton Program Information */}
-        <div className="p-5 sm:p-6 lg:p-7">
-          <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
-            <SkeletonDetail />
-            <SkeletonDetail />
-            <SkeletonDetail />
-            <SkeletonDetail />
-          </div>
-
-          {/* Skeleton Frequency */}
-          <div className="mt-6 flex items-center justify-between border-t border-border pt-5">
-            <div>
-              <div className="h-3 w-28 rounded bg-foreground/10" />
-              <div className="mt-2 h-4 w-24 rounded bg-foreground/10" />
-            </div>
-
-            <div className="h-4 w-24 rounded bg-foreground/10" />
-          </div>
-        </div>
-      </div>
-    );
+    return <CurrentProgramCardSkeleton />;
   }
 
   if (!program) {
@@ -129,70 +51,33 @@ export default function CurrentProgramCard({
   const programTypeImage = program.program_type
     ? `/programtypes/${program.program_type}.jpg`
     : null;
+
+  const handleProgramClick = () => {
+    onProgramClick?.(program);
+  };
+
   return (
-    <article
-      onClick={() => onClick?.(program)}
-      className="
-        group
-        overflow-hidden
-        rounded-2xl
-        border border-primary/30
-        bg-background
-        transition-all
-        hover:shadow-sm
-      "
-    >
-      {/* Accent header */}
-      <div
-        className="
-    relative
-    overflow-hidden
-    bg-primary-400
-    text-foreground
-    dark:bg-primary-200
-  "
-      >
+    <article className="overflow-hidden rounded-2xl border border-primary/30 bg-background transition-colors duration-200">
+      {/* Header */}
+      <div className="relative overflow-hidden bg-primary-400 text-foreground dark:bg-primary-200">
         {/* Decorative circles */}
         <div
-          className="
-      absolute
-      -right-10
-      -top-10
-      h-36
-      w-36
-      rounded-full
-      bg-white/10
-    "
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/10"
         />
 
         <div
-          className="
-      absolute
-      -bottom-16
-      right-20
-      h-32
-      w-32
-      rounded-full
-      bg-white/5
-    "
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-16 right-20 h-32 w-32 rounded-full bg-white/5"
         />
 
-        {/* Program Type Image */}
+        {/* Program image */}
         {programTypeImage && (
-          <div
-            className="
-        absolute
-        inset-y-0
-        left-0
-        z-10
-        aspect-[287/404]
-        h-full
-        overflow-hidden
-      "
-          >
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 aspect-[287/404] h-full overflow-hidden">
             <img
               src={programTypeImage}
               alt=""
+              aria-hidden="true"
               className="h-full w-full object-contain"
             />
           </div>
@@ -200,60 +85,28 @@ export default function CurrentProgramCard({
 
         <div
           className="
-      relative
-      flex
-      min-h-[150px]
-      items-center
-      pl-[calc(150px*0.71+16px)]
-      pr-5
-      py-5
+            relative flex min-h-[150px] items-center
+            pl-[calc(150px*0.71+16px)] pr-5 py-5
 
-      sm:min-h-[165px]
-      sm:pl-[calc(165px*0.71+20px)]
-      sm:pr-6
-      sm:py-6
+            sm:min-h-[165px]
+            sm:pl-[calc(165px*0.71+20px)]
+            sm:pr-6 sm:py-6
 
-      lg:min-h-[180px]
-      lg:pl-[calc(180px*0.71+24px)]
-      lg:pr-7
-      lg:py-7
-    "
+            lg:min-h-[180px]
+            lg:pl-[calc(180px*0.71+24px)]
+            lg:pr-7 lg:py-7
+          "
         >
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span
-                className="
-            rounded-full
-            bg-primary-200
-            px-2.5
-            py-1
-            text-[11px]
-            font-semibold
-            text-black
-            dark:bg-primary
-          "
-              >
+              <span className="rounded-full bg-primary-200 px-2.5 py-1 text-[11px] font-semibold text-black dark:bg-primary">
                 Active
               </span>
 
               <span className="text-xs text-white/70">Current program</span>
             </div>
 
-            <h2
-              className="
-          mt-2
-          line-clamp-2
-          text-xl
-          font-bold
-          leading-6
-
-          sm:text-2xl
-          sm:leading-7
-
-          lg:text-3xl
-          lg:leading-8
-        "
-            >
+            <h2 className="mt-2 line-clamp-2 text-xl font-bold leading-6 sm:text-2xl sm:leading-7 lg:text-3xl lg:leading-8">
               {program.name}
             </h2>
           </div>
@@ -277,8 +130,8 @@ export default function CurrentProgramCard({
           />
         </div>
 
-        {/* Frequency */}
-        <div className="mt-6 flex items-center justify-between border-t border-border pt-5">
+        {/* Training frequency */}
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-5">
           <div>
             <p className="text-xs text-foreground/50">Training frequency</p>
 
@@ -289,9 +142,51 @@ export default function CurrentProgramCard({
             </p>
           </div>
 
-          <span className="text-xs font-medium text-primary transition-transform group-hover:translate-x-0.5">
-            View program →
-          </span>
+          {/* Interactive button */}
+          <button
+            type="button"
+            onClick={handleProgramClick}
+            className="
+              group/button
+              inline-flex min-h-10 items-center justify-center gap-2
+              rounded-xl border border-primary/20
+              bg-primary/5 px-3.5 py-2
+              text-sm font-semibold text-primary
+
+              transition-[background-color,border-color,box-shadow,transform]
+              duration-200 ease-out
+
+              hover:border-primary/40
+              hover:bg-primary/10
+              hover:shadow-sm
+              cursor-pointer
+              active:scale-[0.97]
+
+              focus-visible:outline-none
+              focus-visible:ring-2
+              focus-visible:ring-primary
+              focus-visible:ring-offset-2
+              focus-visible:ring-offset-background
+
+              motion-reduce:transform-none
+              motion-reduce:transition-none
+            "
+          >
+            <span>View program</span>
+
+            <ArrowRight
+              size={16}
+              strokeWidth={2}
+              aria-hidden="true"
+              className="
+                transition-transform duration-200 ease-out
+                group-hover/button:translate-x-1
+                group-active/button:translate-x-0
+                motion-reduce:transform-none
+                motion-reduce:transition-none
+              "
+            />
+          </button>
         </div>
       </div>
     </article>
@@ -308,6 +203,59 @@ function ProgramDetail({ label, value }) {
       <p className="mt-1.5 truncate text-sm font-semibold text-foreground sm:text-[15px]">
         {value}
       </p>
+    </div>
+  );
+}
+
+function CurrentProgramCardSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-border bg-background">
+      {/* Skeleton header */}
+      <div className="relative min-h-[150px] animate-pulse bg-foreground/[0.04] sm:min-h-[165px] lg:min-h-[180px]">
+        <div className="absolute inset-y-0 left-0 aspect-[287/404] h-full bg-foreground/[0.08]" />
+
+        <div
+          className="
+            flex min-h-[150px] items-center
+            pl-[calc(150px*0.71+16px)] pr-5 py-5
+
+            sm:min-h-[165px]
+            sm:pl-[calc(165px*0.71+20px)]
+            sm:pr-6 sm:py-6
+
+            lg:min-h-[180px]
+            lg:pl-[calc(180px*0.71+24px)]
+            lg:pr-7 lg:py-7
+          "
+        >
+          <div className="min-w-0 flex-1">
+            <div className="h-6 w-16 rounded-full bg-foreground/10" />
+
+            <div className="mt-3 h-6 w-3/4 rounded bg-foreground/10 sm:h-7 lg:h-8" />
+
+            <div className="mt-2 h-6 w-1/2 rounded bg-foreground/10 sm:h-7 lg:h-8" />
+          </div>
+        </div>
+      </div>
+
+      {/* Skeleton information */}
+      <div className="p-5 sm:p-6 lg:p-7">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
+          <SkeletonDetail />
+          <SkeletonDetail />
+          <SkeletonDetail />
+          <SkeletonDetail />
+        </div>
+
+        <div className="mt-6 flex items-center justify-between border-t border-border pt-5">
+          <div>
+            <div className="h-3 w-28 rounded bg-foreground/10" />
+            <div className="mt-2 h-4 w-24 rounded bg-foreground/10" />
+          </div>
+
+          <div className="h-4 w-24 rounded bg-foreground/10" />
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import { usePrograms } from "../hooks/programs/usePrograms";
-import { useProgram } from "../hooks/programs/useProgram";
 import { useActiveProgram } from "../hooks/programs/useActiveProgram";
 
 import ProgramSearch from "../components/ProgramSearch";
@@ -26,10 +25,11 @@ import {
 } from "../constants/programFilters";
 import ProgramFormModal from "../components/forms/ProgramFormModal.jsx";
 import { useNotification } from "../../../shared/ui/notification/NotificationProvider.jsx";
+import { useNavigate } from "react-router-dom";
+import ProgramsTabs from "../components/ProgramsTabs.jsx";
 
 export default function ProgramsPage() {
   const { notify } = useNotification();
-  const [selectedProgramId, setSelectedProgramId] = useState(null);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -59,17 +59,13 @@ export default function ProgramsPage() {
   const { data: activeProgram, isLoading: isLoadingActiveProgram } =
     useActiveProgram();
 
-  const { data: selectedProgram, isLoading: isLoadingProgram } =
-    useProgram(selectedProgramId);
-
   const programs = data?.pages.flatMap((page) => page.data) ?? [];
 
-  const handleProgramClick = (program) => {
-    setSelectedProgramId((currentId) =>
-      currentId === program.id ? null : program.id
-    );
-  };
+  const navigate = useNavigate();
 
+  const handleProgramClick = (program) => {
+    navigate(`/programs/${program.id}`);
+  };
   const handleOpenCreate = () => {
     setIsCreateModalOpen(true);
   };
@@ -121,10 +117,12 @@ export default function ProgramsPage() {
 
   return (
     <section>
-      <div className="flex flex-col space-y-4">
+      <ProgramsTabs activeTab="/programs" />
+      <div className="flex flex-col space-y-2">
         <CurrentProgramCard
           program={activeProgram}
           isLoading={isLoadingActiveProgram}
+          onProgramClick={handleProgramClick}
         />
 
         <div className="flex w-full flex-col gap-2 sm:flex-row">
