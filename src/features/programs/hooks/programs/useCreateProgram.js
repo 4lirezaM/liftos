@@ -36,12 +36,9 @@ export const useCreateProgram = () => {
       });
     },
 
-    /**
-     * @param {Object} createdProgram
-     */
-    onSuccess: (createdProgram) => {
-      queryClient.invalidateQueries({
-        queryKey: ["programs", user.id],
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["programs"],
       });
     },
   });

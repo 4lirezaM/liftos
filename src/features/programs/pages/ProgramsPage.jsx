@@ -24,8 +24,11 @@ import {
   DEFAULT_PROGRAM_FILTERS,
   DEFAULT_PROGRAM_SORT,
 } from "../constants/programFilters";
+import ProgramFormModal from "../components/forms/ProgramFormModal.jsx";
+import { useNotification } from "../../../shared/ui/notification/NotificationProvider.jsx";
 
 export default function ProgramsPage() {
+  const { notify } = useNotification();
   const [selectedProgramId, setSelectedProgramId] = useState(null);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -166,12 +169,12 @@ export default function ProgramsPage() {
           onApply={handleApplyFilters}
           onCancel={() => setIsFilterModalOpen(false)}
         />
-
-        {/* <ProgramFormModal
+        <ProgramFormModal
           isOpen={isCreateModalOpen}
           mode="create"
           onClose={handleCloseCreate}
-        />  */}
+          notify={notify}
+        />
       </div>
 
       <FloatingActionButton icon={Plus} onClick={handleOpenCreate} />

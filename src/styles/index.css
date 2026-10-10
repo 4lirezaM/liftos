@@ -295,15 +295,6 @@ html.dark .scrollbar-minimal::-webkit-scrollbar-thumb {
   --z-popover: 40;
 
   /*
-   * Global notifications
-   * - Toasts
-   * - Snackbars
-   * - Undo notifications
-   * - Success / warning / error feedback
-   */
-  --z-notification: 50;
-
-  /*
    * Modal backdrop
    * - Dialog backdrop
    * - Bottom Sheet backdrop
@@ -324,12 +315,20 @@ html.dark .scrollbar-minimal::-webkit-scrollbar-thumb {
   --z-modal: 70;
 
   /*
+  * Global notifications
+  * - Toasts
+  * - Snackbars
+   * - Undo notifications
+   * - Success / warning / error feedback
+   */
+  --z-notification: 80;
+  /*
    * Critical system overlays
    * - Session expired
-   * - Critical application state
-   * - Global blocking UI
-   *
-   * Use very sparingly.
-   */
-  --z-critical: 80;
+ * - Critical application state
+ * - Global blocking UI
+ *
+ * Use very sparingly.
+ */
+  --z-critical: 90;
 }

@@ -33,20 +33,26 @@ export const useUpdateProgram = () => {
         throw new Error("User is not authenticated.");
       }
 
+      if (!programId) {
+        throw new Error("Program ID is required.");
+      }
+
       return updateProgram(programId, updates);
     },
 
     /**
      * @param {Object} updatedProgram
      */
-    onSuccess: (updatedProgram) => {
-      queryClient.invalidateQueries({
-        queryKey: ["programs", user.id],
-      });
+    onSuccess: async (updatedProgram) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["programs", user.id],
+        }),
 
-      queryClient.invalidateQueries({
-        queryKey: ["program", user.id, updatedProgram.id],
-      });
+        queryClient.invalidateQueries({
+          queryKey: ["program", user.id, updatedProgram.id],
+        }),
+      ]);
     },
   });
 };
