@@ -4,6 +4,7 @@ import {
   PROGRAM_TYPE_FILTER_OPTIONS,
   PROGRAM_GOAL_FILTER_OPTIONS,
   PROGRAM_DIFFICULTY_FILTER_OPTIONS,
+  PROGRAM_ARCHIVE_FILTER_OPTIONS,
 } from "../../constants/programFilters";
 
 const FILTER_SECTIONS = [
@@ -32,11 +33,16 @@ export default function ProgramFilterModal({
   onApply,
   onCancel,
 }) {
-  const activeFilterCount = FILTER_SECTIONS.reduce(
-    (total, section) => total + filters[section.key].length,
-    0
-  );
+  const archiveFilter = filters.archived;
+  const activeFilterCount =
+    FILTER_SECTIONS.reduce(
+      (total, section) => total + filters[section.key].length,
+      0
+    ) + (archiveFilter !== "available" ? 1 : 0);
 
+  const handleArchiveFilterChange = (value) => {
+    onChange("archived", value);
+  };
   return (
     <SlideUpModal isOpen={isOpen} onClose={onCancel} title="Filters">
       <div className="flex h-full flex-col">
@@ -51,6 +57,46 @@ export default function ProgramFilterModal({
             </p>
           </div>
 
+          {/* Archive status */}
+          <section className="border-b border-border py-5">
+            <h3 className="mb-3 text-sm font-medium text-foreground">
+              Archive Status
+            </h3>
+
+            <div
+              className="flex w-full overflow-hidden rounded-lg border border-border"
+              role="group"
+              aria-label="Archive status"
+            >
+              {PROGRAM_ARCHIVE_FILTER_OPTIONS.map((option, index) => {
+                const isSelected = archiveFilter === option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => handleArchiveFilterChange(option.value)}
+                    className={[
+                      "min-h-11 min-w-0 flex-1 px-2 py-2",
+                      "text-sm font-medium transition-colors duration-200",
+                      "focus-visible:z-10 focus-visible:outline-none",
+                      "focus-visible:ring-2 focus-visible:ring-inset",
+                      "focus-visible:ring-primary/50",
+                      index > 0 ? "border-l border-border" : "",
+                      isSelected
+                        ? "bg-primary/10 text-primary"
+                        : "bg-background text-muted-foreground hover:bg-muted",
+                    ].join(" ")}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Existing filters */}
           {FILTER_SECTIONS.map((section) => (
             <section
               key={section.key}

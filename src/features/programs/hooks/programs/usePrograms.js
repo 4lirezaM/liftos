@@ -15,7 +15,7 @@ const PROGRAMS_QUERY_KEY = ["programs"];
  * @param {string[]} [options.programType=[]]
  * @param {string[]} [options.goal=[]]
  * @param {string[]} [options.difficulty=[]]
- * @param {boolean} [options.archived=false]
+ * @param {"available"|"archived"|"all"} [options.archived="available"]
  * @param {"name_asc"|"recently_added"|"recently_updated"} [options.sort="name_asc"]
  * @param {number} [options.limit=10]
  *
@@ -26,7 +26,7 @@ export const usePrograms = ({
   programType = [],
   goal = [],
   difficulty = [],
-  archived = false,
+  archived = "available",
   sort = "name_asc",
   limit = 10,
 } = {}) => {

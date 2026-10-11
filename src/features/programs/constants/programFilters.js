@@ -31,4 +31,19 @@ export const DEFAULT_PROGRAM_FILTERS = {
   programType: [],
   goal: [],
   difficulty: [],
+  archived: "available",
 };
+export const PROGRAM_ARCHIVE_FILTER_OPTIONS = [
+  {
+    value: "available",
+    label: "Not Archived",
+  },
+  {
+    value: "archived",
+    label: "Archived",
+  },
+  {
+    value: "all",
+    label: "All",
+  },
+];

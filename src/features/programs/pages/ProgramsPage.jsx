@@ -53,9 +53,7 @@ export default function ProgramsPage() {
     search,
     ...filters,
     sort,
-    archived: false,
   });
-
   const { data: activeProgram, isLoading: isLoadingActiveProgram } =
     useActiveProgram();
 
@@ -79,6 +77,7 @@ export default function ProgramsPage() {
       programType: [...filters.programType],
       goal: [...filters.goal],
       difficulty: [...filters.difficulty],
+      archived: filters.archived,
     });
 
     setIsFilterModalOpen(true);
@@ -100,6 +99,7 @@ export default function ProgramsPage() {
       programType: [...draftFilters.programType],
       goal: [...draftFilters.goal],
       difficulty: [...draftFilters.difficulty],
+      archived: draftFilters.archived,
     });
 
     setIsFilterModalOpen(false);

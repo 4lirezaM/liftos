@@ -9,7 +9,7 @@ import { supabase } from "@/config/supabase";
  * @param {string[]} [options.goal=[]]
  * @param {string[]} [options.difficulty=[]]
  * @param {"name_asc"|"recently_added"|"recently_updated"} [options.sort="name_asc"]
- * @param {boolean} [options.archived=false]
+ * @param {string} [options.archived="archived|"available"|"all"]
  * @param {number} [options.page=1]
  * @param {number} [options.limit=20]
  * @returns {Promise<{data: Object[], count: number, page: number, limit: number, hasMore: boolean}>}
@@ -20,17 +20,15 @@ export const getPrograms = async ({
   goal = [],
   difficulty = [],
   sort = "name_asc",
-  archived = false,
+  archived = "available",
   page = 1,
   limit = 20,
 } = {}) => {
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
-  let query = supabase
-    .from("programs")
-    .select(
-      `
+  let query = supabase.from("programs").select(
+    `
         id,
         name,
         goal,
@@ -41,9 +39,15 @@ export const getPrograms = async ({
         is_active,
         is_archived
       `,
-      { count: "exact" }
-    )
-    .eq("is_archived", archived);
+    { count: "exact" }
+  );
+  // Archive filter
+  if (archived === "available") {
+    query = query.eq("is_archived", false);
+  } else if (archived === "archived") {
+    query = query.eq("is_archived", true);
+  }
+  // "all" means no archive filter.
 
   // Search
   const trimmedSearch = search.trim();

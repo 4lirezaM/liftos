@@ -1,3 +1,5 @@
+import { Archive } from "lucide-react";
+
 import { PROGRAM_TYPE_OPTIONS } from "../../constants/programOptions";
 
 export default function ProgramListItem({ program, onClick }) {
@@ -14,9 +16,11 @@ export default function ProgramListItem({ program, onClick }) {
       onClick={() => onClick?.(program)}
       className="
         group
+        relative
         flex w-full
         cursor-pointer
         items-stretch
+        overflow-hidden
         border-b border-border
         text-left
         transition-colors
@@ -24,15 +28,36 @@ export default function ProgramListItem({ program, onClick }) {
         hover:bg-foreground/[0.03]
       "
     >
+      {/* Archived Corner Label */}
+      {/* Archived Corner Label */}
+      {program.is_archived && (
+        <div
+          className="
+     absolute right-0 top-1.5 z-base
+inline-flex items-center gap-0.5
+rounded-l-sm
+border-y border-l border-amber-400/40
+bg-amber-400/10
+px-1.5 py-px
+text-[9px] text-amber-400
+shadow-sm
+    "
+          aria-label="Archived program"
+        >
+          <Archive size={8} strokeWidth={2} />
+
+          <span className="text-[10px] font-semibold uppercase tracking-wide">
+            Archived
+          </span>
+        </div>
+      )}
+
       {/* Active Status */}
       {program.is_active && (
         <div
           className="
-            flex
-            w-7
-            shrink-0
-            items-center
-            justify-center
+            flex w-7 shrink-0
+            items-center justify-center
             bg-primary
             text-slate-900
           "
@@ -55,44 +80,28 @@ export default function ProgramListItem({ program, onClick }) {
       {/* Main Content */}
       <div
         className="
-          flex
-          min-w-0
-          flex-1
-          items-center
-          gap-4
-          px-2
-          py-2
-
-          sm:gap-5
-          sm:px-5
-          sm:py-6
-
-          lg:gap-6
-          lg:px-6
-          lg:py-6
+          flex min-w-0 flex-1
+          items-center gap-4
+          px-2 py-2
+          sm:gap-5 sm:px-5 sm:py-6
+          lg:gap-6 lg:px-6 lg:py-6
         "
       >
         {/* Program Type Image */}
         {programTypeImage && (
           <div
             className="
-                 h-[88px]
-    w-[63px]
-    shrink-0
-    overflow-hidden
-    rounded-lg
-    bg-foreground/[0.04]
-
-    sm:h-[105px]
-    sm:w-[75px]
-
-    lg:h-[123px]
-    lg:w-[87px]
+              h-[88px] w-[63px]
+              shrink-0 overflow-hidden rounded-lg
+              bg-foreground/[0.04]
+              sm:h-[105px] sm:w-[75px]
+              lg:h-[123px] lg:w-[87px]
             "
           >
             <img
               src={programTypeImage}
               alt=""
+              loading="lazy"
               className="h-full w-full object-cover"
             />
           </div>
@@ -100,40 +109,26 @@ export default function ProgramListItem({ program, onClick }) {
 
         {/* Program Information */}
         <div className="min-w-0 flex-1">
-          {/* Name */}
           <p
             className="
-      line-clamp-2
-      text-sm
-      font-semibold
-      leading-5
-      text-foreground
-
-      sm:text-base
-      sm:leading-5
-
-      lg:text-lg
-      lg:leading-6
-    "
+              line-clamp-2
+              text-sm font-semibold leading-5
+              text-foreground
+              sm:text-base sm:leading-5
+              lg:text-lg lg:leading-6
+            "
           >
             {program.name}
           </p>
 
-          {/* Program Type + Goal */}
           <p
             className="
-      mt-1
-      line-clamp-2
-      text-[11px]
-      leading-4
-      text-foreground/60
-
-      sm:text-xs
-      sm:leading-4
-
-      lg:text-sm
-      lg:leading-5
-    "
+              mt-1 line-clamp-2
+              text-[11px] leading-4
+              text-foreground/60
+              sm:text-xs sm:leading-4
+              lg:text-sm lg:leading-5
+            "
           >
             {programType}
             {program.goal && ` · ${program.goal}`}
@@ -143,12 +138,9 @@ export default function ProgramListItem({ program, onClick }) {
         {/* Desktop Program Information */}
         <div
           className="
-            hidden
-            min-w-0
-            lg:flex
-            lg:w-[38%]
-            lg:items-center
-            lg:gap-8
+            hidden min-w-0
+            lg:flex lg:w-[38%]
+            lg:items-center lg:gap-8
           "
         >
           {/* Difficulty */}
@@ -170,34 +162,25 @@ export default function ProgramListItem({ program, onClick }) {
           </div>
         </div>
 
-        {/* Frequency - visible on all sizes */}
+        {/* Frequency */}
         <div className="shrink-0 text-center">
           <p
             className="
-      text-lg
-      font-semibold
-      leading-5
-      text-primary
-
-      sm:text-xl
-      sm:leading-6
-    "
+              text-lg font-semibold leading-5 text-primary
+              sm:text-xl sm:leading-6
+            "
           >
             {program.days_per_week ?? "—"}
           </p>
 
           <p
             className="
-      mt-0.5
-      text-[10px]
-      font-medium
-      italic
-      leading-3
-      text-foreground/40
-              tracking-[0.18em]
+              mt-0.5
+              text-[10px] font-medium italic leading-3
+              tracking-[0.18em] text-foreground/40
               [writing-mode:vertical-rl]
               [text-orientation:mixed]
-    "
+            "
           >
             /week
           </p>

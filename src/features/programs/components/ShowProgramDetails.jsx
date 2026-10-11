@@ -110,14 +110,23 @@ export default function ShowProgramDetails({ programId }) {
   const mutationError =
     activateMutation.error || archiveMutation.error || restoreMutation.error;
 
-  const invalidateProgramQueries = () => {
-    queryClient.invalidateQueries({
-      queryKey: ["program", program?.created_by, programId],
-    });
+  const invalidateProgramQueries = async () => {
+    await Promise.all([
+      // Invalidate all program lists, including different filters and searches.
+      queryClient.invalidateQueries({
+        queryKey: ["programs"],
+      }),
 
-    queryClient.invalidateQueries({
-      queryKey: ["programs", program?.created_by],
-    });
+      // Invalidate the active program query for the current user.
+      queryClient.invalidateQueries({
+        queryKey: ["activeProgram", program?.created_by],
+      }),
+
+      // Invalidate the current program details.
+      queryClient.invalidateQueries({
+        queryKey: ["program", program?.created_by, programId],
+      }),
+    ]);
   };
 
   const handleCloseEdit = () => {
@@ -126,7 +135,24 @@ export default function ShowProgramDetails({ programId }) {
   };
 
   const handleActivate = () => {
-    activateMutation.mutate(programId);
+    activateMutation.mutate(programId, {
+      onSuccess: async () => {
+        await invalidateProgramQueries();
+
+        notify({
+          type: "success",
+          title: "Program activated",
+          message: "Your program has been activated successfully.",
+        });
+      },
+      onError: (error) => {
+        notify({
+          type: "error",
+          title: "Activation failed",
+          message: error.message || "Please try again.",
+        });
+      },
+    });
   };
 
   const handleArchive = () => {
