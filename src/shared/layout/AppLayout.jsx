@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import { AppNavigation } from "../../features/navigation";
+import ScrollToTop from "../ui/ScrollToTop";
 
 function AppLayout() {
   return (
@@ -14,6 +15,7 @@ function AppLayout() {
                       mb-(--mobile-nav-height)
                       md:mb-0"
       >
+        <ScrollToTop />
         <Outlet />
       </main>
     </div>

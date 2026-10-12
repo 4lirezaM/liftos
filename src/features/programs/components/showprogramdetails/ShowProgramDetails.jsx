@@ -15,80 +15,12 @@ import {
   PROGRAM_DIFFICULTY_OPTIONS,
   PROGRAM_GOAL_OPTIONS,
 } from "@/features/programs/constants/programOptions";
+import { ProgramDetailsSkeleton } from "./ProgramDetailsSkeleton";
+import { ActionButton } from "./ActionButton";
+import { DetailItem } from "./DetailItem";
 
 const getOptionLabel = (options, value) =>
   options.find((option) => option.value === value)?.label ?? value ?? "—";
-
-const DetailItem = ({ label, value }) => (
-  <div className="min-w-0 py-4">
-    <p className="text-xs font-medium uppercase tracking-wider text-foreground/45">
-      {label}
-    </p>
-
-    <p className="mt-2 break-words text-sm font-semibold text-foreground">
-      {value ?? "—"}
-    </p>
-  </div>
-);
-
-const ActionButton = ({
-  children,
-  onClick,
-  disabled = false,
-  variant = "secondary",
-}) => {
-  const variants = {
-    primary: [
-      "border border-primary-500/40 bg-primary-500/10",
-      "text-primary-500",
-      "hover/70 hover/20",
-      "active active/30",
-      "focus-visible/50",
-    ].join(" "),
-
-    secondary: [
-      "border border-foreground/15 bg-foreground/[0.02]",
-      "text-foreground",
-      "hover:border-foreground/30 hover:bg-foreground/[0.05]",
-      "active:bg-foreground/[0.08]",
-      "focus-visible:ring-foreground/30",
-    ].join(" "),
-    warning: [
-      "border border-amber-400/40 bg-amber-400/10",
-      "text-amber-400",
-      "hover:border-amber-400/70 hover:bg-amber-400/20",
-      "active:border-amber-400 active:bg-amber-400/30",
-      "focus-visible:ring-amber-400/50",
-    ].join(" "),
-    danger: [
-      "border border-red-400/40 bg-red-400/10",
-      "text-red-400",
-      "hover:border-red-400/70 hover:bg-red-400/20",
-      "active:border-red-400 active:bg-red-400/30",
-      "focus-visible:ring-red-400/50",
-    ].join(" "),
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={[
-        "inline-flex min-h-11 items-center justify-center gap-2",
-        "cursor-pointer rounded-lg border px-4 py-2.5",
-        "text-sm font-medium",
-        "transition-colors duration-200",
-        "active:scale-[0.97]",
-        "focus-visible focus-visible",
-        "disabled disabled",
-        variants[variant],
-      ].join(" ")}
-    >
-      {children}
-    </button>
-  );
-};
 
 export default function ShowProgramDetails({ programId }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -234,8 +166,8 @@ export default function ShowProgramDetails({ programId }) {
     <>
       <section className="space-y-6">
         {/* Program cover */}
-        <div className="mx-auto w-full max-w-[492px] md:w-1/2">
-          <div className="relative aspect-[492/404] w-full overflow-hidden rounded-xl bg-foreground/[0.02]">
+        <div className="mx-auto w-full max-w-123 md:w-1/2">
+          <div className="relative aspect-492/404 w-full overflow-hidden rounded-xl bg-foreground/2">
             <img
               src={coverImage}
               alt=""
@@ -269,7 +201,7 @@ export default function ShowProgramDetails({ programId }) {
             </span>
           </div>
 
-          <h1 className="break-words text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          <h1 className="wrap-break-word text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             {program.name}
           </h1>
 
@@ -395,59 +327,5 @@ export default function ShowProgramDetails({ programId }) {
         notify={notify}
       />
     </>
-  );
-}
-
-/* Loading skeleton */
-
-function ProgramDetailsSkeleton() {
-  return (
-    <section
-      aria-label="Loading program details"
-      aria-busy="true"
-      className="animate-pulse space-y-6"
-    >
-      {/* Cover skeleton */}
-      <div className="w-full max-w-[492px] md:w-1/2">
-        <div className="aspect-[492/404] w-full rounded-xl bg-foreground/[0.06]" />
-      </div>
-
-      {/* Heading skeleton */}
-      <div>
-        <div className="flex gap-2">
-          <div className="h-7 w-28 rounded-md bg-foreground/[0.08]" />
-          <div className="h-7 w-20 rounded-md bg-foreground/[0.08]" />
-        </div>
-
-        <div className="mt-4 h-8 w-3/4 max-w-md rounded-md bg-foreground/[0.08] sm:h-9" />
-
-        <div className="mt-4 space-y-2">
-          <div className="h-3 w-full max-w-2xl rounded bg-foreground/[0.06]" />
-          <div className="h-3 w-4/5 max-w-xl rounded bg-foreground/[0.06]" />
-        </div>
-      </div>
-
-      {/* Action buttons skeleton */}
-      <div className="flex flex-wrap gap-2 border-y border-foreground/10 py-4">
-        <div className="h-10 w-32 rounded-lg bg-foreground/[0.08]" />
-        <div className="h-10 w-28 rounded-lg bg-foreground/[0.08]" />
-        <div className="h-10 w-28 rounded-lg bg-foreground/[0.08]" />
-      </div>
-
-      {/* Details skeleton */}
-      <div>
-        <div className="h-6 w-36 rounded bg-foreground/[0.08]" />
-        <div className="mt-2 h-4 w-64 max-w-full rounded bg-foreground/[0.06]" />
-
-        <div className="mt-4 grid grid-cols-1 divide-y divide-foreground/10 border-y border-foreground/10 sm:grid-cols-2 sm:gap-x-8 sm:divide-y-0 lg:grid-cols-3 lg:gap-x-10">
-          {Array.from({ length: 6 }, (_, index) => (
-            <div key={index} className="space-y-3 py-5">
-              <div className="h-3 w-28 rounded bg-foreground/[0.06]" />
-              <div className="h-4 w-36 max-w-full rounded bg-foreground/[0.08]" />
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
   );
 }
