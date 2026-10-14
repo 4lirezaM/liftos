@@ -1,6 +1,9 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
+import ProgramDayFormModal from "../components/program-days/ProgramDayFormModal";
 import { Dumbbell, Plus } from "lucide-react";
 
+import { useNotification } from "@/shared/ui/notification/NotificationProvider";
 import { useProgramDayStructure } from "../hooks/programDays/useProgramDayStructure";
 
 import ProgramDayDetailsHeader from "../components/program-days/ProgramDayDetailsHeader";
@@ -13,7 +16,16 @@ import BackButton from "@/shared/ui/backbutton/BackButton";
 export default function ProgramDayDetailsPage() {
   const navigate = useNavigate();
   const { programId, dayId } = useParams();
+  const [programDayToEdit, setProgramDayToEdit] = useState(null);
 
+  const { notify } = useNotification();
+  const handleEditDay = (programDay) => {
+    setProgramDayToEdit(programDay);
+  };
+
+  const handleCloseEditDay = () => {
+    setProgramDayToEdit(null);
+  };
   const {
     data: rawGroups = [],
     isPending,
@@ -47,7 +59,7 @@ export default function ProgramDayDetailsPage() {
     >
       <BackButton onClick={() => navigate(-1)}>Back to programs</BackButton>
 
-      <ProgramDayDetailsHeader />
+      <ProgramDayDetailsHeader onEdit={handleEditDay} />
 
       {isPending ? (
         <div className="rounded-lg border border-border px-3 py-8 text-center text-sm text-secondary">
@@ -83,6 +95,13 @@ export default function ProgramDayDetailsPage() {
           addIcon={Plus}
         />
       )}
+      <ProgramDayFormModal
+        isOpen={Boolean(programDayToEdit)}
+        programId={programId}
+        programDay={programDayToEdit}
+        onClose={handleCloseEditDay}
+        notify={notify}
+      />
     </main>
   );
 }
