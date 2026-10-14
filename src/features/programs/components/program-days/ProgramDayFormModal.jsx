@@ -1,4 +1,4 @@
-import SlideUpModal from "@/shared/ui/slideupModal/SlideUpModal";
+import SlideUpModal from "@/shared/ui/slideUpModal/SlideUpModal";
 import ProgramDayForm from "./ProgramDayForm";
 
 const ProgramDayFormModal = ({
