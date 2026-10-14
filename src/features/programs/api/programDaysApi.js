@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/config/supabase";
 
 /**
  * Get all days belonging to a program.

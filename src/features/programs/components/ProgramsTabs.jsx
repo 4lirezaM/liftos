@@ -72,11 +72,12 @@ export default function ProgramsTabs({ activeTab }) {
       {description && (
         <div
           className="
-            my-2 flex items-start gap-2.5
+            my-2 flex items-center gap-2.5
             rounded-lg border border-border
-            bg-foreground/[0.02]
+            bg-foreground/2
              py-2.5
             sm:px-4 sm:py-3
+            px-1
           "
         >
           <Info

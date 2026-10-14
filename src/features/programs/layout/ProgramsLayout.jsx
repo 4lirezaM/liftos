@@ -7,7 +7,7 @@ export default function ProgramsLayout() {
         <div
           className="
             mx-auto w-full max-w-7xl
-            px-4 py-5
+            p-1 m-0
             sm:px-6 sm:py-6
             lg:px-8 lg:py-8
           "

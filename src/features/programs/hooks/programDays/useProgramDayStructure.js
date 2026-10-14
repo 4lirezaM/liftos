@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import { useAuth } from "@/features/auth";
+
 import { getProgramDayStructure } from "../../api/programDayStructureApi";
 
 /**
@@ -13,7 +15,9 @@ export const useProgramDayStructure = (programDayId) => {
 
   return useQuery({
     queryKey: ["programDayStructure", user?.id, programDayId],
+
     queryFn: () => getProgramDayStructure(programDayId),
+
     enabled: Boolean(user?.id && programDayId),
   });
 };

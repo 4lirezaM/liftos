@@ -21,8 +21,14 @@ import HomePage from "../../pages/Homepage.jsx";
 import {
   ProgramsPage,
   ProgramDetailsPage,
+  ProgramDayDetailsPage,
   PlanDetailsPage,
 } from "../../features/programs";
+
+import ProgramsLayout from "../../features/programs/layout/ProgramsLayout.jsx";
+
+// Exercises
+import ExercisesPage from "../../features/exercises/pages/ExercisesPage.jsx";
 
 // Workout
 import {
@@ -33,8 +39,6 @@ import {
 
 // Progress
 import { ProgressPage } from "../../features/progress";
-import ExercisesPage from "../../features/exercises/pages/ExercisesPage.jsx";
-import ProgramsLayout from "../../features/programs/layout/ProgramsLayout.jsx";
 
 export const router = createBrowserRouter([
   {
@@ -74,27 +78,40 @@ export const router = createBrowserRouter([
                 element: <HomePage />,
               },
 
+              // ======================
               // Programs
+              // ======================
+
               {
                 path: "programs",
                 element: <ProgramsLayout />,
 
                 children: [
+                  // Programs list
                   {
                     index: true,
                     element: <ProgramsPage />,
                   },
 
+                  // Exercise library
                   {
                     path: "exercises",
                     element: <ExercisesPage />,
                   },
 
+                  // Program details
                   {
                     path: ":programId",
                     element: <ProgramDetailsPage />,
                   },
 
+                  // Program day details
+                  {
+                    path: ":programId/days/:dayId",
+                    element: <ProgramDayDetailsPage />,
+                  },
+
+                  // Plan details
                   {
                     path: ":programId/plans/:planId",
                     element: <PlanDetailsPage />,
@@ -102,10 +119,12 @@ export const router = createBrowserRouter([
                 ],
               },
 
+              // ======================
               // Workout
+              // ======================
+
               {
                 path: "workout",
-
                 children: [
                   {
                     path: ":workoutId",
@@ -124,19 +143,28 @@ export const router = createBrowserRouter([
                 ],
               },
 
+              // ======================
               // Progress
+              // ======================
+
               {
                 path: "progress",
                 element: <ProgressPage />,
               },
 
+              // ======================
               // Profile
+              // ======================
+
               {
                 path: "profile",
                 element: <ProfilePage />,
               },
 
+              // ======================
               // App fallback
+              // ======================
+
               {
                 path: "*",
                 element: <Navigate to="/" replace />,
