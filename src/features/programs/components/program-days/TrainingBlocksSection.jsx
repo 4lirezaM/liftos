@@ -28,7 +28,7 @@ export default function TrainingBlocksSection({
           className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-medium text-slate-800 transition-opacity hover:opacity-90 sm:px-3"
         >
           <Plus size={14} />
-          Add block
+          Add training block
         </button>
       </div>
 
