@@ -19,10 +19,14 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     const root = document.documentElement;
+    const isDark = theme === "dark";
 
-    root.classList.toggle("dark", theme === "dark");
-
+    root.classList.toggle("dark", isDark);
     localStorage.setItem("theme", theme);
+
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+
+    metaThemeColor?.setAttribute("content", isDark ? "#111827" : "#f7f6f3");
   }, [theme]);
 
   const toggleTheme = () => {
