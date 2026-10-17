@@ -26,7 +26,7 @@ export const ThemeProvider = ({ children }) => {
 
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
 
-    metaThemeColor?.setAttribute("content", isDark ? "#111827" : "#f7f6f3");
+    metaThemeColor?.setAttribute("content", isDark ? "#090f18" : "#f7f6f3");
   }, [theme]);
 
   const toggleTheme = () => {
