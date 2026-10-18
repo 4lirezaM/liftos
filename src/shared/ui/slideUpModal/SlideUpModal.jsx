@@ -2,11 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, X } from "lucide-react";
 
-// Animation duration in milliseconds.
 const ANIMATION_DURATION = 300;
-
 const SWIPE_THRESHOLD = 8;
-const SCROLL_THRESHOLD = 0;
 const modalStack = [];
 
 const SlideUpModal = ({
@@ -17,167 +14,44 @@ const SlideUpModal = ({
   mode = "default",
 }) => {
   const [isMounted, setIsMounted] = useState(isOpen);
+  const [phase, setPhase] = useState(isOpen ? "entering" : "closed");
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const modalId = useRef(Symbol("slide-up-modal")).current;
-
+  const modalId = useRef(Symbol("modal")).current;
   const panelRef = useRef(null);
-  const backdropRef = useRef(null);
   const contentRef = useRef(null);
-
-  const panelAnimationRef = useRef(null);
-  const backdropAnimationRef = useRef(null);
-  const animationRunRef = useRef(0);
-
-  const isExpandedRef = useRef(isExpanded);
   const isOpenRef = useRef(isOpen);
-
-  // Keep refs synchronized for native event listeners.
-  isExpandedRef.current = isExpanded;
-  isOpenRef.current = isOpen;
+  const expandedRef = useRef(false);
+  const lastChildrenRef = useRef(children);
 
   const isNested = mode === "nested";
 
-  // Keep the component mounted when opening.
-  // When closing, mounting is controlled by the exit animation.
-  useEffect(() => {
+  isOpenRef.current = isOpen;
+  expandedRef.current = isExpanded;
+
+  // Preserve children until the exit animation finishes.
+  if (isOpen) {
+    lastChildrenRef.current = children;
+  }
+
+  const renderedChildren = isOpen ? children : lastChildrenRef.current;
+
+  // Control opening and closing.
+  useLayoutEffect(() => {
     if (isOpen) {
       setIsMounted(true);
+      setPhase("entering");
       setIsExpanded(false);
+    } else if (isMounted) {
+      setPhase("exiting");
     }
-  }, [isOpen]);
+  }, [isOpen, isMounted]);
 
-  // Run entrance and exit animations without CSS transitions.
-  useLayoutEffect(() => {
-    if (!isMounted) return;
-
-    const panel = panelRef.current;
-    const backdrop = backdropRef.current;
-
-    if (!panel || !backdrop) return;
-
-    const runId = ++animationRunRef.current;
-
-    const cancelCurrentAnimations = () => {
-      panelAnimationRef.current?.cancel();
-      backdropAnimationRef.current?.cancel();
-
-      panelAnimationRef.current = null;
-      backdropAnimationRef.current = null;
-    };
-
-    if (isOpen) {
-      // Entrance always starts below the visible screen.
-      cancelCurrentAnimations();
-
-      panel.style.transform = "translateY(100%)";
-      backdrop.style.opacity = "0";
-
-      // Ensure the browser registers the starting styles.
-      void panel.offsetHeight;
-
-      const panelAnimation = panel.animate(
-        [{ transform: "translateY(100%)" }, { transform: "translateY(0%)" }],
-        {
-          duration: ANIMATION_DURATION,
-          easing: "ease-out",
-          fill: "forwards",
-        }
-      );
-
-      const backdropAnimation = backdrop.animate(
-        [{ opacity: 0 }, { opacity: 1 }],
-        {
-          duration: ANIMATION_DURATION,
-          easing: "ease-out",
-          fill: "forwards",
-        }
-      );
-
-      panelAnimationRef.current = panelAnimation;
-      backdropAnimationRef.current = backdropAnimation;
-
-      panelAnimation.onfinish = () => {
-        if (animationRunRef.current !== runId) return;
-        if (!isOpenRef.current) return;
-
-        // Preserve the final state in the element's inline styles.
-        panel.style.transform = "translateY(0%)";
-        backdrop.style.opacity = "1";
-
-        panelAnimation.cancel();
-        backdropAnimation.cancel();
-
-        panelAnimationRef.current = null;
-        backdropAnimationRef.current = null;
-      };
-
-      return;
-    }
-
-    // Read the current visual position before cancelling a previous animation.
-    const currentTransform = getComputedStyle(panel).transform;
-    const currentOpacity = getComputedStyle(backdrop).opacity;
-
-    cancelCurrentAnimations();
-
-    // Preserve the current visual position so exit begins without a jump.
-    panel.style.transform =
-      currentTransform === "none" ? "translateY(0%)" : currentTransform;
-
-    backdrop.style.opacity = currentOpacity;
-
-    const panelAnimation = panel.animate(
-      [{ transform: panel.style.transform }, { transform: "translateY(100%)" }],
-      {
-        duration: ANIMATION_DURATION,
-        easing: "ease-in",
-        fill: "forwards",
-      }
-    );
-
-    const backdropAnimation = backdrop.animate(
-      [{ opacity: Number(currentOpacity) }, { opacity: 0 }],
-      {
-        duration: ANIMATION_DURATION,
-        easing: "ease-in",
-        fill: "forwards",
-      }
-    );
-
-    panelAnimationRef.current = panelAnimation;
-    backdropAnimationRef.current = backdropAnimation;
-
-    panelAnimation.onfinish = () => {
-      // Ignore callbacks from an obsolete animation.
-      if (animationRunRef.current !== runId) return;
-      if (isOpenRef.current) return;
-
-      // Remove the modal only after the panel has moved completely offscreen.
-      setIsExpanded(false);
-      setIsMounted(false);
-    };
-  }, [isMounted, isOpen]);
-
-  // Cancel outstanding animations if the component is genuinely unmounted.
-  useEffect(() => {
-    return () => {
-      animationRunRef.current += 1;
-
-      panelAnimationRef.current?.cancel();
-      backdropAnimationRef.current?.cancel();
-
-      panelAnimationRef.current = null;
-      backdropAnimationRef.current = null;
-    };
-  }, []);
-
-  // Prevent background scrolling while the modal exists.
+  // Lock background scrolling.
   useEffect(() => {
     if (!isMounted) return;
 
     const previousOverflow = document.body.style.overflow;
-
     document.body.style.overflow = "hidden";
 
     return () => {
@@ -185,7 +59,7 @@ const SlideUpModal = ({
     };
   }, [isMounted]);
 
-  // Maintain modal stacking order.
+  // Keep track of nested modals.
   useEffect(() => {
     if (!isMounted) return;
 
@@ -193,162 +67,116 @@ const SlideUpModal = ({
 
     return () => {
       const index = modalStack.lastIndexOf(modalId);
-
-      if (index !== -1) {
-        modalStack.splice(index, 1);
-      }
+      if (index !== -1) modalStack.splice(index, 1);
     };
   }, [isMounted, modalId]);
 
-  // Close only the topmost modal using Escape.
+  // Close the topmost modal with Escape.
   useEffect(() => {
     if (!isMounted) return;
 
     const handleKeyDown = (event) => {
       if (event.key !== "Escape") return;
-      if (modalStack[modalStack.length - 1] !== modalId) return;
+      if (modalStack.at(-1) !== modalId) return;
       if (!isOpenRef.current) return;
 
       event.preventDefault();
-      event.stopPropagation();
-
       onClose();
     };
 
     document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isMounted, modalId, onClose]);
 
-  // Handle wheel, touch and scrollbar-driven scrolling.
+  // Expand/collapse with wheel, touch, or scrollbar scrolling.
   useEffect(() => {
-    if (!isMounted) return;
+    if (!isMounted || isNested) return;
 
     const content = contentRef.current;
-
     if (!content) return;
 
-    let touchStartY = null;
-    let touchStartScrollTop = 0;
-    let touchAction = null;
+    let startY = null;
+    let startScrollTop = 0;
+    let gesture = null;
+
+    const expand = () => {
+      expandedRef.current = true;
+      setIsExpanded(true);
+    };
+
+    const collapse = () => {
+      expandedRef.current = false;
+      setIsExpanded(false);
+    };
 
     const handleWheel = (event) => {
-      if (isNested) return;
+      const expanded = expandedRef.current;
+      const atTop = content.scrollTop <= 0;
 
-      const expanded = isExpandedRef.current;
-      const atTop = content.scrollTop <= SCROLL_THRESHOLD;
-
-      // First downward wheel movement expands the modal.
-      // Prevent the same movement from scrolling the content.
       if (!expanded && event.deltaY > 0) {
         event.preventDefault();
-
         content.scrollTop = 0;
-        setIsExpanded(true);
-
-        return;
-      }
-
-      // Scroll normally once expanded.
-      // Collapse only when scrolling upward at the top of the content.
-      if (expanded && event.deltaY < 0 && atTop) {
+        expand();
+      } else if (expanded && event.deltaY < 0 && atTop) {
         event.preventDefault();
-        setIsExpanded(false);
+        collapse();
       }
     };
 
     const handleScroll = () => {
-      if (isNested || isExpandedRef.current) return;
-
-      // Detect scrollbar dragging or track clicks.
-      // If the collapsed content begins scrolling, stop it and expand first.
-      if (content.scrollTop > SCROLL_THRESHOLD) {
+      if (!expandedRef.current && content.scrollTop > 0) {
         content.scrollTop = 0;
-        setIsExpanded(true);
+        expand();
       }
     };
 
     const handleTouchStart = (event) => {
       if (event.touches.length !== 1) return;
 
-      touchStartY = event.touches[0].clientY;
-      touchStartScrollTop = content.scrollTop;
-      touchAction = null;
+      startY = event.touches[0].clientY;
+      startScrollTop = content.scrollTop;
+      gesture = null;
     };
 
     const handleTouchMove = (event) => {
-      if (isNested || touchStartY === null) return;
-      if (event.touches.length !== 1) return;
+      if (startY === null || event.touches.length !== 1) return;
 
-      const currentY = event.touches[0].clientY;
-      const deltaY = currentY - touchStartY;
+      const deltaY = event.touches[0].clientY - startY;
 
-      // Once a gesture starts expanding or collapsing the modal,
-      // prevent the same gesture from scrolling the content.
-      if (touchAction !== null) {
+      if (gesture) {
         event.preventDefault();
         return;
       }
 
-      // Swiping upward expands the collapsed modal.
-      if (!isExpandedRef.current && deltaY < -SWIPE_THRESHOLD) {
-        touchAction = "expand";
-
+      if (!expandedRef.current && deltaY < -SWIPE_THRESHOLD) {
+        gesture = "expand";
         event.preventDefault();
         content.scrollTop = 0;
-
-        setIsExpanded(true);
-
-        return;
-      }
-
-      // Swiping downward at the top collapses the expanded modal.
-      if (
-        isExpandedRef.current &&
-        touchStartScrollTop <= SCROLL_THRESHOLD &&
-        content.scrollTop <= SCROLL_THRESHOLD &&
+        expand();
+      } else if (
+        expandedRef.current &&
+        startScrollTop <= 0 &&
+        content.scrollTop <= 0 &&
         deltaY > SWIPE_THRESHOLD
       ) {
-        touchAction = "collapse";
-
+        gesture = "collapse";
         event.preventDefault();
-        setIsExpanded(false);
+        collapse();
       }
     };
 
     const handleTouchEnd = () => {
-      touchStartY = null;
-      touchStartScrollTop = 0;
-      touchAction = null;
+      startY = null;
+      startScrollTop = 0;
+      gesture = null;
     };
 
-    // Native non-passive listeners let us prevent the initial gesture
-    // from scrolling the list at the same time as expanding the modal.
-    content.addEventListener("wheel", handleWheel, {
-      passive: false,
-    });
-
-    content.addEventListener("scroll", handleScroll, {
-      passive: true,
-    });
-
-    content.addEventListener("touchstart", handleTouchStart, {
-      passive: true,
-    });
-
-    content.addEventListener("touchmove", handleTouchMove, {
-      passive: false,
-    });
-
-    content.addEventListener("touchend", handleTouchEnd, {
-      passive: true,
-    });
-
-    content.addEventListener("touchcancel", handleTouchEnd, {
-      passive: true,
-    });
+    content.addEventListener("wheel", handleWheel, { passive: false });
+    content.addEventListener("scroll", handleScroll, { passive: true });
+    content.addEventListener("touchstart", handleTouchStart, { passive: true });
+    content.addEventListener("touchmove", handleTouchMove, { passive: false });
+    content.addEventListener("touchend", handleTouchEnd);
+    content.addEventListener("touchcancel", handleTouchEnd);
 
     return () => {
       content.removeEventListener("wheel", handleWheel);
@@ -360,6 +188,20 @@ const SlideUpModal = ({
     };
   }, [isMounted, isNested]);
 
+  const handleAnimationEnd = (event) => {
+    if (event.target !== panelRef.current) return;
+
+    if (phase === "entering") {
+      setPhase("open");
+    }
+
+    if (phase === "exiting" && !isOpenRef.current) {
+      setIsExpanded(false);
+      setIsMounted(false);
+      setPhase("closed");
+    }
+  };
+
   const handleBackdropClick = (event) => {
     if (event.target !== event.currentTarget) return;
     if (isNested || !isOpenRef.current) return;
@@ -370,92 +212,103 @@ const SlideUpModal = ({
   if (!isMounted) return null;
 
   return createPortal(
-    <div
-      ref={backdropRef}
-      role="presentation"
-      onClick={handleBackdropClick}
-      className={[
-        "fixed inset-0 z-overlay flex items-end justify-center",
-        "bg-black/40 backdrop-blur-sm dark:bg-black/60",
-      ].join(" ")}
-      style={{
-        opacity: 0,
-      }}
-    >
+    <>
+      <style>{`
+        @keyframes slideUpEnter {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+
+        @keyframes slideUpExit {
+          from { transform: translateY(0); }
+          to { transform: translateY(100%); }
+        }
+
+        @keyframes backdropEnter {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes backdropExit {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+      `}</style>
+
       <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        className={[
-          "flex w-full flex-col",
-          isExpanded ? "h-dvh rounded-t-none" : "h-[88dvh] rounded-t-3xl",
-          "border border-border bg-background shadow-2xl",
-          "sm:w-[94%]",
-          "md:w-[92%]",
-          "lg:w-[90%] lg:max-w-[1440px]",
-          "xl:w-[88%]",
-          className,
-        ].join(" ")}
+        role="presentation"
+        onClick={handleBackdropClick}
+        className="fixed inset-0 z-overlay flex items-end justify-center bg-black/40 backdrop-blur-sm dark:bg-black/60"
         style={{
-          transform: "translateY(100%)",
+          animation:
+            phase === "entering"
+              ? `backdropEnter ${ANIMATION_DURATION}ms ease-out both`
+              : phase === "exiting"
+              ? `backdropExit ${ANIMATION_DURATION}ms ease-in both`
+              : "none",
         }}
       >
-        {/* Header */}
-        <div className="flex shrink-0 items-center justify-between px-4 pb-2 pt-3 sm:px-6 sm:pt-4">
-          {isNested ? (
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Back to previous modal"
-              className={[
-                "group inline-flex items-center gap-2",
-                "text-sm font-medium text-foreground/60",
-                "transition-colors duration-200 hover:text-primary-500",
-                "focus-visible:outline-none focus-visible:ring-2",
-                "focus-visible:ring-primary focus-visible:ring-offset-2",
-                "focus-visible:ring-offset-background",
-              ].join(" ")}
-            >
-              <span className="flex size-9 items-center justify-center rounded-full border border-foreground/10 transition-all duration-300 group-hover:-translate-x-1 group-hover:border-primary-500/40">
-                <ArrowLeft size={17} strokeWidth={1.8} aria-hidden="true" />
-              </span>
-
-              <span>Back</span>
-            </button>
-          ) : (
-            <div />
-          )}
-
-          {!isNested && (
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close modal"
-              className={[
-                "rounded-full p-2 text-foreground/60",
-                "transition-colors hover:bg-foreground/10",
-                "hover:text-foreground",
-                "focus-visible:outline-none focus-visible:ring-2",
-                "focus-visible:ring-primary",
-              ].join(" ")}
-            >
-              <X size={20} aria-hidden="true" />
-            </button>
-          )}
-        </div>
-
-        {/* Scrollable content */}
         <div
-          ref={contentRef}
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          onAnimationEnd={handleAnimationEnd}
           className={[
-            "min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4",
-            "scrollbar-custom sm:px-6 sm:pb-6",
+            "flex w-full flex-col border border-border bg-background shadow-2xl",
+            "sm:w-[94%] md:w-[92%] lg:w-[90%] lg:max-w-[1440px] xl:w-[88%]",
+            className,
           ].join(" ")}
+          style={{
+            height: isExpanded ? "100dvh" : "88dvh",
+            borderTopLeftRadius: isExpanded ? 0 : "1.5rem",
+            borderTopRightRadius: isExpanded ? 0 : "1.5rem",
+            transition: "height 300ms ease, border-radius 300ms ease",
+            animation:
+              phase === "entering"
+                ? `slideUpEnter ${ANIMATION_DURATION}ms ease-out both`
+                : phase === "exiting"
+                ? `slideUpExit ${ANIMATION_DURATION}ms ease-in both`
+                : "none",
+          }}
         >
-          {children}
+          <div className="flex shrink-0 items-center justify-between px-4 pb-2 pt-3 sm:px-6 sm:pt-4">
+            {isNested ? (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Back to previous modal"
+                className="group inline-flex items-center gap-2 text-sm font-medium text-foreground/60 transition-colors hover:text-primary-500"
+              >
+                <span className="flex size-9 items-center justify-center rounded-full border border-foreground/10 transition-all duration-300 group-hover:-translate-x-1 group-hover:border-primary-500/40">
+                  <ArrowLeft size={17} strokeWidth={1.8} aria-hidden="true" />
+                </span>
+                <span>Back</span>
+              </button>
+            ) : (
+              <div />
+            )}
+
+            {!isNested && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close modal"
+                className="rounded-full p-2 text-foreground/60 transition-colors hover:bg-foreground/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <X size={20} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+
+          <div
+            ref={contentRef}
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 scrollbar-custom sm:px-6 sm:pb-6"
+          >
+            {renderedChildren}
+          </div>
         </div>
       </div>
-    </div>,
+    </>,
     document.getElementById("portal-root") || document.body
   );
 };
