@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/config/supabase";
 
 /**
  * Get all sets belonging to a program day exercise.
@@ -145,4 +145,22 @@ export const updateProgramDayExerciseSet = async (
   if (error) throw error;
 
   return data;
+};
+/**
+ * Remove all sets belonging to a program day exercise.
+ *
+ * @param {string} programDayExerciseId
+ * @returns {Promise<void>}
+ */
+export const removeProgramDayExerciseSets = async (programDayExerciseId) => {
+  if (!programDayExerciseId) {
+    throw new Error("Program Day Exercise ID is required");
+  }
+
+  const { error } = await supabase
+    .from("program_day_exercise_sets")
+    .delete()
+    .eq("program_day_exercise_id", programDayExerciseId);
+
+  if (error) throw error;
 };

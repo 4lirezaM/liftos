@@ -1,10 +1,13 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/config/supabase";
 
 /**
  * Get all exercises belonging to an exercise group.
  *
- * @param {string} groupId
- * @returns {Promise<Object[]>}
+ * Exercises are returned in their configured order.
+ *
+ * @param {string} groupId - The exercise group's ID.
+ * @returns {Promise<Object[]>} The list of exercise records.
+ * @throws {Error} If the group ID is missing or the database request fails.
  */
 export const getProgramDayExercises = async (groupId) => {
   if (!groupId) {
@@ -23,10 +26,11 @@ export const getProgramDayExercises = async (groupId) => {
 };
 
 /**
- * Get a single program day exercise.
+ * Get a single exercise record by its ID.
  *
- * @param {string} programDayExerciseId
- * @returns {Promise<Object>}
+ * @param {string} programDayExerciseId - The record's ID.
+ * @returns {Promise<Object>} The exercise record.
+ * @throws {Error} If the ID is missing or the record cannot be retrieved.
  */
 export const getProgramDayExercise = async (programDayExerciseId) => {
   if (!programDayExerciseId) {
@@ -47,14 +51,15 @@ export const getProgramDayExercise = async (programDayExerciseId) => {
 /**
  * Add an exercise to an exercise group.
  *
- * The exercise position is automatically assigned
- * by the database based on the current group order.
+ * The database function assigns the exercise's position.
+ * Empty notes are stored as null.
  *
- * @param {Object} params
- * @param {string} params.group_id
- * @param {string} params.exercise_id
- * @param {string|null} [params.notes]
- * @returns {Promise<Object>}
+ * @param {Object} params - The exercise record parameters.
+ * @param {string} params.group_id - The target exercise group's ID.
+ * @param {string} params.exercise_id - The exercise library record's ID.
+ * @param {string|null} [params.notes=null] - Optional exercise notes.
+ * @returns {Promise<Object>} The created exercise record.
+ * @throws {Error} If required parameters are missing or the request fails.
  */
 export const addProgramDayExercise = async ({
   group_id,
@@ -79,12 +84,17 @@ export const addProgramDayExercise = async ({
 
   return data;
 };
+
 /**
- * Update an existing program day exercise.
+ * Update an existing exercise record.
  *
- * @param {string} programDayExerciseId
- * @param {Object} updates
- * @returns {Promise<Object>}
+ * Only the provided fields are updated.
+ * Empty notes are normalized to null.
+ *
+ * @param {string} programDayExerciseId - The record's ID.
+ * @param {Object} updates - The fields to update.
+ * @returns {Promise<Object>} The updated exercise record.
+ * @throws {Error} If the ID is missing or the update fails.
  */
 export const updateProgramDayExercise = async (
   programDayExerciseId,
@@ -94,8 +104,13 @@ export const updateProgramDayExercise = async (
     throw new Error("Program Day Exercise ID is required");
   }
 
+  if (!updates || typeof updates !== "object" || Array.isArray(updates)) {
+    throw new Error("Valid exercise updates are required");
+  }
+
   const payload = { ...updates };
 
+  // Normalize notes only when the caller explicitly provides this field.
   if (payload.notes !== undefined) {
     payload.notes = payload.notes?.trim() || null;
   }
@@ -110,4 +125,26 @@ export const updateProgramDayExercise = async (
   if (error) throw error;
 
   return data;
+};
+
+/**
+ * Remove an exercise record from an exercise group.
+ *
+ * This deletes the association record, not the exercise from the library.
+ *
+ * @param {string} exerciseRecordId - The program day exercise record's ID.
+ * @returns {Promise<void>} Resolves when the record has been deleted.
+ * @throws {Error} If the deletion fails.
+ */
+export const removeProgramDayExercise = async (exerciseRecordId) => {
+  if (!exerciseRecordId) {
+    throw new Error("Program Day Exercise ID is required");
+  }
+
+  const { error } = await supabase
+    .from("program_day_exercises")
+    .delete()
+    .eq("id", exerciseRecordId);
+
+  if (error) throw error;
 };
