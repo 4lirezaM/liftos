@@ -1,31 +1,27 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
-import ProgramDayFormModal from "../components/program-days/ProgramDayFormModal";
 import { Dumbbell, Plus } from "lucide-react";
 
 import { useNotification } from "@/shared/ui/notification/NotificationProvider";
+import BackButton from "@/shared/ui/backbutton/BackButton";
+
 import { useProgramDayStructure } from "../hooks/programDays/useProgramDayStructure";
-
-import ProgramDayDetailsHeader from "../components/program-days/ProgramDayDetailsHeader";
-import TrainingBlocksSection from "../components/program-days/TrainingBlocksSection";
-
 import { normalizeExerciseGroup } from "../utils/programDayDetails.utils";
 
-import BackButton from "@/shared/ui/backbutton/BackButton";
+import ProgramDayFormModal from "../components/program-days/ProgramDayFormModal";
+import ProgramDayDetailsHeader from "../components/program-days/ProgramDayDetailsHeader";
+import TrainingBlocksSection from "../components/program-days/TrainingBlocksSection";
+import SelectExerciseModal from "@/features/programs/components/selectexercisemodal/ExerciseGroupFormModal";
 
 export default function ProgramDayDetailsPage() {
   const navigate = useNavigate();
   const { programId, dayId } = useParams();
-  const [programDayToEdit, setProgramDayToEdit] = useState(null);
 
   const { notify } = useNotification();
-  const handleEditDay = (programDay) => {
-    setProgramDayToEdit(programDay);
-  };
 
-  const handleCloseEditDay = () => {
-    setProgramDayToEdit(null);
-  };
+  const [programDayToEdit, setProgramDayToEdit] = useState(null);
+  const [exerciseGroupToEdit, setExerciseGroupToEdit] = useState(null);
+
   const {
     data: rawGroups = [],
     isPending,
@@ -36,12 +32,24 @@ export default function ProgramDayDetailsPage() {
 
   const groups = rawGroups.map(normalizeExerciseGroup);
 
+  const handleEditDay = (programDay) => {
+    setProgramDayToEdit(programDay);
+  };
+
+  const handleCloseEditDay = () => {
+    setProgramDayToEdit(null);
+  };
+
   const handleEditExercise = (exercise) => {
     console.info("Edit exercise:", exercise);
   };
 
   const handleEditGroup = (group) => {
-    console.info("Edit training block:", group);
+    setExerciseGroupToEdit(group);
+  };
+
+  const handleCloseExerciseGroup = () => {
+    setExerciseGroupToEdit(null);
   };
 
   const handleDeleteGroup = (group) => {
@@ -95,11 +103,19 @@ export default function ProgramDayDetailsPage() {
           addIcon={Plus}
         />
       )}
+
       <ProgramDayFormModal
         isOpen={Boolean(programDayToEdit)}
         programId={programId}
         programDay={programDayToEdit}
         onClose={handleCloseEditDay}
+        notify={notify}
+      />
+
+      <SelectExerciseModal
+        isOpen={Boolean(exerciseGroupToEdit)}
+        exerciseGroup={exerciseGroupToEdit}
+        onClose={handleCloseExerciseGroup}
         notify={notify}
       />
     </main>
