@@ -341,7 +341,7 @@ export default function ExerciseGroupForm({
         </p>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto pb-24">
+      <div className="min-h-0 flex-1  pb-24">
         {!isCreateMode && !groupId && (
           <div className="px-4 py-6 sm:px-6">
             <p className="text-sm text-red-500">
