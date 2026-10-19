@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Check, ListFilter, Eye } from "lucide-react";
 
 import { useExercise } from "@/features/exercises/hooks/useExercise";
-import ExerciseModal from "@/features/exercises/components/ExerciseDetails/ExerciseModal";
 import { useExercises } from "@/features/exercises/hooks/useExercises";
+
+import ExerciseModal from "@/features/exercises/components/ExerciseDetails/ExerciseModal";
 import ExerciseSearch from "@/features/exercises/components/ExerciseSearch";
 import ExerciseSortMenu from "@/features/exercises/components/sorting/ExerciseSortMenu";
 import ExerciseFilterModal from "@/features/exercises/components/filters/ExerciseFilterModal";
@@ -77,6 +78,23 @@ export default function ExerciseLibraryPicker({
     setSelectedExerciseId(null);
   };
 
+  const handleSelectExercise = (exercise) => {
+    const isAlreadySelected = selectedIds.has(exercise.id);
+
+    if (isAlreadySelected || !onSelect) return;
+
+    onSelect(exercise);
+  };
+
+  const handleCardKeyDown = (event, exercise, isSelected) => {
+    if (isSelected) return;
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleSelectExercise(exercise);
+    }
+  };
+
   return (
     <section className="space-y-4">
       <div>
@@ -96,7 +114,7 @@ export default function ExerciseLibraryPicker({
           <button
             type="button"
             onClick={handleOpenFilters}
-            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-surface-secondary sm:flex-none"
+            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-surface-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:flex-none"
           >
             <ListFilter size={16} />
             Filters
@@ -107,7 +125,10 @@ export default function ExerciseLibraryPicker({
       </div>
 
       {isError && (
-        <p className="rounded-lg border border-red-500/30 p-3 text-sm text-red-500">
+        <p
+          role="alert"
+          className="rounded-lg border border-red-500/30 p-3 text-sm text-red-500"
+        >
           Couldn’t load exercises: {error?.message}
         </p>
       )}
@@ -128,11 +149,25 @@ export default function ExerciseLibraryPicker({
                 return (
                   <div
                     key={exercise.id}
-                    className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-primary/50"
+                    role="button"
+                    tabIndex={isSelected ? -1 : 0}
+                    aria-disabled={isSelected}
+                    aria-label={`${exercise.name}${
+                      isSelected ? ", already selected" : ", add exercise"
+                    }`}
+                    onClick={() => handleSelectExercise(exercise)}
+                    onKeyDown={(event) =>
+                      handleCardKeyDown(event, exercise, isSelected)
+                    }
+                    className={`flex min-w-0 items-center gap-3 rounded-xl border bg-surface p-3 transition-colors ${
+                      isSelected
+                        ? "cursor-default border-primary/40"
+                        : "cursor-pointer border-border hover:border-primary/60 hover:bg-surface-secondary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    }`}
                   >
-                    {exercise.thumbnail_url ? (
+                    {exercise.media_url ? (
                       <img
-                        src={exercise.thumbnail_url}
+                        src={exercise.media_url}
                         alt=""
                         loading="lazy"
                         className="size-16 shrink-0 rounded-lg bg-surface-secondary object-contain"
@@ -144,41 +179,41 @@ export default function ExerciseLibraryPicker({
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!isSelected) {
-                            onSelect(exercise);
-                          }
-                        }}
-                        disabled={isSelected}
-                        className="block w-full text-left disabled:cursor-default"
+                      <span className="block break-words text-sm font-medium text-foreground">
+                        {exercise.name}
+                      </span>
+
+                      <span
+                        className={`mt-1 block text-xs ${
+                          isSelected ? "text-primary" : "text-secondary"
+                        }`}
                       >
-                        <span className="block break-words text-sm font-medium text-foreground">
-                          {exercise.name}
-                        </span>
-
-                        <span className="mt-1 block text-xs text-secondary">
-                          {isSelected ? "Already selected" : "Tap to add"}
-                        </span>
-                      </button>
+                        {isSelected ? "Already selected" : "Tap to add"}
+                      </span>
 
                       <button
                         type="button"
-                        onClick={() => setSelectedExerciseId(exercise.id)}
-                        className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedExerciseId(exercise.id);
+                        }}
+                        onKeyDown={(event) => event.stopPropagation()}
+                        className="mt-2 inline-flex items-center gap-1 rounded-sm text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                       >
                         <Eye size={13} />
                         Show details
                       </button>
                     </div>
 
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-secondary text-secondary">
-                      {isSelected ? (
-                        <Check size={16} className="text-primary" />
-                      ) : (
-                        "+"
-                      )}
+                    <span
+                      aria-hidden="true"
+                      className={`flex size-8 shrink-0 items-center justify-center rounded-full transition-colors ${
+                        isSelected
+                          ? "bg-primary/10 text-primary"
+                          : "bg-surface-secondary text-secondary"
+                      }`}
+                    >
+                      {isSelected ? <Check size={16} /> : "+"}
                     </span>
                   </div>
                 );
@@ -191,7 +226,7 @@ export default function ExerciseLibraryPicker({
               type="button"
               disabled={isFetchingNextPage}
               onClick={fetchNextPage}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-secondary disabled:opacity-50"
+              className="w-full rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isFetchingNextPage ? "Loading..." : "Load more"}
             </button>
