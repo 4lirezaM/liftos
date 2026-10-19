@@ -1,4 +1,6 @@
-import { X } from "lucide-react";
+import { GripVertical, X } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 import Tag from "./Tag";
 import { formatLabel } from "@/features/programs/utils/programDayDetails.utils";
@@ -16,16 +18,63 @@ export default function SelectedExerciseCard({
   onRemove,
   disabled = false,
 }) {
-  const primaryMuscles = normalizeArray(exercise.primary_muscles);
-  const secondaryMuscles = normalizeArray(exercise.secondary_muscles);
-  const equipment = normalizeArray(exercise.equipment);
+  const sortableId =
+    exercise.exercise_id ?? exercise.exercise?.id ?? exercise.id;
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: sortableId,
+    disabled,
+  });
+
+  const primaryMuscles = normalizeArray(
+    exercise.primary_muscles ?? exercise.exercise?.primary_muscles
+  );
+  const secondaryMuscles = normalizeArray(
+    exercise.secondary_muscles ?? exercise.exercise?.secondary_muscles
+  );
+  const equipment = normalizeArray(
+    exercise.equipment ?? exercise.exercise?.equipment
+  );
+
+  const name = exercise.name ?? exercise.exercise?.name ?? "Exercise";
+  const mediaUrl = exercise.media_url ?? exercise.exercise?.media_url;
 
   return (
-    <article className="group relative flex min-w-0 gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-primary/40">
-      {exercise.media_url ? (
+    <article
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className={[
+        "group relative flex min-w-0 gap-2 rounded-xl border border-border",
+        "bg-surface p-3 transition-colors hover:border-primary/40",
+        isDragging ? "z-10 opacity-80 shadow-xl" : "",
+      ].join(" ")}
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        disabled={disabled}
+        aria-label={`Reorder ${name}`}
+        title="Drag to reorder"
+        className="flex min-h-10 w-7 shrink-0 touch-none items-center justify-center self-center rounded-md text-secondary hover:bg-surface-secondary disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <GripVertical size={18} />
+      </button>
+
+      {mediaUrl ? (
         <img
-          src={exercise.media_url}
-          alt={`${exercise.name} demonstration`}
+          src={mediaUrl}
+          alt={`${name} demonstration`}
           loading="lazy"
           className="size-[68px] shrink-0 rounded-lg bg-surface-secondary object-contain"
         />
@@ -35,9 +84,9 @@ export default function SelectedExerciseCard({
         </div>
       )}
 
-      <div className="min-w-0 flex-1 py-0.5 pr-6">
+      <div className="min-w-0 flex-1 py-0.5 pr-5">
         <h4 className="break-words text-sm font-semibold leading-5 text-foreground">
-          {exercise.name}
+          {name}
         </h4>
 
         {(primaryMuscles.length > 0 || secondaryMuscles.length > 0) && (
@@ -78,8 +127,8 @@ export default function SelectedExerciseCard({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => onRemove(exercise.id)}
-        aria-label={`Remove ${exercise.name}`}
+        onClick={() => onRemove(sortableId)}
+        aria-label={`Remove ${name}`}
         title="Remove exercise"
         className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-md text-secondary transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
       >

@@ -11,13 +11,11 @@ export default function ExerciseGroupFormModal({
 
   return (
     <SlideUpModal isOpen={isOpen} onClose={onClose}>
-      {isOpen && (
-        <ExerciseGroupForm
-          exerciseGroup={exerciseGroup}
-          onClose={onClose}
-          notify={notify}
-        />
-      )}
+      <ExerciseGroupForm
+        exerciseGroup={exerciseGroup}
+        onClose={onClose}
+        notify={notify}
+      />
     </SlideUpModal>
   );
 }

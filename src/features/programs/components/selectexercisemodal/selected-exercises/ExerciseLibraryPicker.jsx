@@ -46,7 +46,11 @@ export default function ExerciseLibraryPicker({
 
   const exercises = data?.pages.flatMap((page) => page.data) ?? [];
 
-  const selectedIds = new Set(selectedExercises.map((item) => item.id));
+  const selectedIds = new Set(
+    selectedExercises.map(
+      (item) => item.exercise_id ?? item.exercise?.id ?? item.id
+    )
+  );
 
   const handleOpenFilters = () => {
     setDraftFilters(filters);

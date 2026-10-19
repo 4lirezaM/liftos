@@ -1,117 +1,451 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import SelectedExercisesSection from "./selected-exercises/SelectedExercisesSection";
 import ExerciseLibraryPicker from "./selected-exercises/ExerciseLibraryPicker";
 
+import { useProgramDayExercisesByGroupId } from "@/features/programs/hooks/programDayExercises/useProgramDayExercisesByGroupId";
+import { useCreateProgramDayExerciseGroup } from "@/features/programs/hooks/programDayExerciseGroups/useCreateProgramDayExerciseGroup";
+import { useAddProgramDayExercise } from "@/features/programs/hooks/programDayExercises/useAddProgramDayExercise";
 import { useRemoveProgramDayExercise } from "@/features/programs/hooks/programDayExercises/useRemoveProgramDayExercise";
 import { useRemoveProgramDayExerciseSet } from "@/features/programs/hooks/programDayExerciseSets/useRemoveProgramDayExerciseSet";
+import { useReorderProgramDayExercises } from "@/features/programs/hooks/programDayExercises/useReorderProgramDayExercises";
 
-export default function ExerciseGroupForm({ exerciseGroup, onClose, notify }) {
-  const [selectedExercises, setSelectedExercises] = useState(
-    exerciseGroup?.exercises ?? []
+import { getProgramDayExercisesByGroupId } from "@/features/programs/api/programDayExercisesApi";
+
+/**
+ * Returns the ID of the underlying exercise from the library.
+ * `id` may instead refer to a program_day_exercises record.
+ */
+function getLibraryId(exercise) {
+  return exercise.exercise_id ?? exercise.exercise?.id ?? exercise.id;
+}
+
+/**
+ * Normalizes library exercises and saved program-day exercise records
+ * into a consistent shape for the form.
+ */
+function normalizeExercise(exercise) {
+  const libraryExercise = exercise.exercise ?? exercise;
+
+  return {
+    ...libraryExercise,
+    ...exercise,
+    exercise_id: getLibraryId(exercise),
+    name: exercise.name ?? libraryExercise.name,
+    media_url: exercise.media_url ?? libraryExercise.media_url,
+    group_id: exercise.group_id ?? null,
+    position: exercise.position ?? null,
+  };
+}
+
+function haveSameOrder(first, second) {
+  if (first.length !== second.length) return false;
+
+  return first.every(
+    (exercise, index) => getLibraryId(exercise) === getLibraryId(second[index])
   );
-  const [removingExerciseId, setRemovingExerciseId] = useState(null);
+}
 
+function createExerciseMaps(exercises) {
+  return new Map(
+    exercises.map((exercise) => [getLibraryId(exercise), exercise])
+  );
+}
+
+export default function ExerciseGroupForm({
+  mode = "edit",
+  exerciseGroup,
+  groupId = exerciseGroup?.id,
+  programDayId = exerciseGroup?.program_day_id,
+  groupType,
+  onClose,
+  onSaved,
+  notify,
+}) {
+  const isCreateMode = mode === "create";
+
+  const [selectedExercises, setSelectedExercises] = useState([]);
+  const [originalExercises, setOriginalExercises] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const exercisesQuery = useProgramDayExercisesByGroupId(
+    isCreateMode ? null : groupId
+  );
+
+  const createGroupMutation = useCreateProgramDayExerciseGroup();
+  const addExerciseMutation = useAddProgramDayExercise();
   const removeExerciseMutation = useRemoveProgramDayExercise();
   const removeSetsMutation = useRemoveProgramDayExerciseSet();
+  const reorderMutation = useReorderProgramDayExercises();
 
+  const isLoading =
+    !isCreateMode && Boolean(groupId) && exercisesQuery.isPending;
+
+  const loadError = !isCreateMode && exercisesQuery.isError;
+
+  const hasChanges = useMemo(() => {
+    // A new group itself is a change, even when it contains no exercises.
+    if (isCreateMode) return true;
+
+    return !haveSameOrder(originalExercises, selectedExercises);
+  }, [isCreateMode, originalExercises, selectedExercises]);
+
+  // Initialize the edit draft from the server without overwriting
+  // unsaved local edits when the query refetches.
   useEffect(() => {
-    setSelectedExercises(exerciseGroup?.exercises ?? []);
-  }, [exerciseGroup]);
-
-  const handleAddExercise = (exercise) => {
-    setSelectedExercises((current) => {
-      const alreadyExists = current.some(
-        (item) => (item.exercise_id ?? item.id) === exercise.id
-      );
-
-      if (alreadyExists) return current;
-
-      return [...current, exercise];
-    });
-  };
-
-  const handleRemoveExercise = async (exerciseId) => {
-    const exercise = selectedExercises.find((item) => item.id === exerciseId);
-
-    if (!exercise || removingExerciseId) return;
-
-    // A library item that has not been saved to the group
-    // can be removed from the local selection only.
-    if (!exercise.group_id) {
-      setSelectedExercises((current) =>
-        current.filter((item) => item.id !== exerciseId)
-      );
+    if (isCreateMode) {
+      setOriginalExercises([]);
+      setSelectedExercises([]);
       return;
     }
 
-    setRemovingExerciseId(exerciseId);
+    if (!groupId || !exercisesQuery.data) return;
+
+    const normalized = exercisesQuery.data.map(normalizeExercise);
+
+    setOriginalExercises(normalized);
+    setSelectedExercises(normalized);
+  }, [isCreateMode, groupId, exercisesQuery.data]);
+  const handleAddExercise = useCallback((exercise) => {
+    const normalized = normalizeExercise(exercise);
+    const libraryId = getLibraryId(normalized);
+
+    if (!libraryId) return;
+
+    setSelectedExercises((current) => {
+      if (current.some((item) => getLibraryId(item) === libraryId)) {
+        return current;
+      }
+
+      return [
+        ...current,
+        {
+          ...normalized,
+          exercise_id: libraryId,
+          group_id: null,
+          position: null,
+
+          // This is a temporary UI ID, not a persisted record ID.
+          id: libraryId,
+        },
+      ];
+    });
+  }, []);
+
+  const handleRemoveExercise = useCallback((libraryId) => {
+    setSelectedExercises((current) =>
+      current.filter((exercise) => getLibraryId(exercise) !== libraryId)
+    );
+  }, []);
+
+  const handleReorderExercises = useCallback((nextExercises) => {
+    setSelectedExercises(nextExercises);
+  }, []);
+
+  const handleDiscard = useCallback(() => {
+    setSelectedExercises(originalExercises);
+  }, [originalExercises]);
+
+  const handleSaveChanges = async () => {
+    if (!hasChanges || isSaving || isLoading || loadError) {
+      return;
+    }
+
+    if (!programDayId) {
+      notify?.("Program Day ID is missing.", "error");
+      return;
+    }
+
+    if (isCreateMode && !groupType) {
+      notify?.("Exercise Group type is required.", "error");
+      return;
+    }
+
+    if (!isCreateMode && !groupId) {
+      notify?.("Exercise Group ID is missing.", "error");
+      return;
+    }
+
+    setIsSaving(true);
+
+    let targetGroupId = groupId;
 
     try {
-      await removeSetsMutation.mutateAsync({
-        programDayExerciseId: exercise.id,
-        programDayId: exerciseGroup.program_day_id,
-      });
+      // 1. Create the group only when the user saves.
+      if (isCreateMode) {
+        const createdGroup = await createGroupMutation.mutateAsync({
+          program_day_id: programDayId,
+          group_type: groupType,
+          position: exerciseGroup?.position ?? 1,
+        });
 
-      await removeExerciseMutation.mutateAsync({
-        exerciseRecordId: exercise.id,
-        groupId: exercise.group_id,
-        programDayId: exerciseGroup.program_day_id,
-      });
+        if (!createdGroup?.id) {
+          throw new Error(
+            "The exercise group was created without returning an ID."
+          );
+        }
 
-      setSelectedExercises((current) =>
-        current.filter((item) => item.id !== exerciseId)
+        targetGroupId = createdGroup.id;
+      }
+
+      const originalByLibraryId = createExerciseMaps(originalExercises);
+
+      const selectedByLibraryId = createExerciseMaps(selectedExercises);
+
+      const removedExercises = originalExercises.filter(
+        (exercise) => !selectedByLibraryId.has(getLibraryId(exercise))
       );
 
-      notify?.("Exercise removed successfully", "success");
+      const addedExercises = selectedExercises.filter(
+        (exercise) => !originalByLibraryId.has(getLibraryId(exercise))
+      );
+
+      // 2. Remove sets before removing their parent exercise records.
+      // Exercises that remain selected are not touched, so their sets persist.
+      for (const exercise of removedExercises) {
+        if (!exercise.id) {
+          throw new Error(
+            `Missing saved record ID for ${
+              exercise.name ?? "a removed exercise"
+            }.`
+          );
+        }
+        await removeSetsMutation.mutateAsync({
+          programDayExerciseId: exercise.id,
+          programDayId,
+        });
+
+        await removeExerciseMutation.mutateAsync({
+          exerciseRecordId: exercise.id,
+          groupId: targetGroupId,
+          programDayId,
+        });
+      }
+
+      // 3. Add newly selected library exercises.
+      for (const exercise of addedExercises) {
+        const libraryId = getLibraryId(exercise);
+
+        if (!libraryId) {
+          throw new Error(
+            `Missing library exercise ID for ${
+              exercise.name ?? "a selected exercise"
+            }.`
+          );
+        }
+
+        await addExerciseMutation.mutateAsync({
+          group_id: targetGroupId,
+          exercise_id: libraryId,
+          programDayId,
+        });
+      }
+
+      // 4. Fetch persisted records. Reordering must use record IDs,
+      // not exercise-library IDs or temporary UI IDs.
+      const persistedRecords = (
+        await getProgramDayExercisesByGroupId(targetGroupId)
+      ).map(normalizeExercise);
+
+      const persistedByLibraryId = createExerciseMaps(persistedRecords);
+
+      const orderedRecordIds = selectedExercises.map((exercise) => {
+        const persisted = persistedByLibraryId.get(getLibraryId(exercise));
+
+        if (!persisted?.id) {
+          throw new Error(
+            `Could not find the saved record for ${
+              exercise.name ?? "an exercise"
+            }.`
+          );
+        }
+
+        return persisted.id;
+      });
+
+      // An empty list is valid after removing all exercises.
+      if (orderedRecordIds.length > 0) {
+        await reorderMutation.mutateAsync({
+          groupId: targetGroupId,
+          programDayId,
+          exerciseRecordIds: orderedRecordIds,
+        });
+      }
+
+      // 5. Re-fetch the final saved order and update the local baseline.
+      const finalRecords = (
+        await getProgramDayExercisesByGroupId(targetGroupId)
+      ).map(normalizeExercise);
+
+      const finalByLibraryId = createExerciseMaps(finalRecords);
+
+      const orderedFinalExercises = selectedExercises.map((exercise) => {
+        const persisted = finalByLibraryId.get(getLibraryId(exercise));
+
+        if (!persisted?.id) {
+          throw new Error(
+            `Could not verify the saved record for ${
+              exercise.name ?? "an exercise"
+            }.`
+          );
+        }
+
+        return persisted;
+      });
+
+      setOriginalExercises(orderedFinalExercises);
+      setSelectedExercises(orderedFinalExercises);
+
+      notify?.("Exercise group saved successfully.", "success");
+
+      onSaved?.({
+        groupId: targetGroupId,
+        exercises: orderedFinalExercises,
+      });
     } catch (error) {
-      console.error("Failed to remove exercise:", error);
-      notify?.("Failed to remove exercise", "error");
+      console.error("Failed to save exercise group:", error);
+
+      // Preserve the user's draft. Reloading the baseline helps the form
+      // distinguish persisted changes from remaining local changes.
+      if (targetGroupId && !isCreateMode) {
+        try {
+          const persistedRecords = (
+            await getProgramDayExercisesByGroupId(targetGroupId)
+          ).map(normalizeExercise);
+
+          setOriginalExercises(persistedRecords);
+        } catch (refreshError) {
+          console.error("Failed to refresh persisted exercises:", refreshError);
+        }
+      }
+
+      notify?.(
+        error?.message ??
+          "Saving failed. Your current selection has been preserved.",
+        "error"
+      );
     } finally {
-      setRemovingExerciseId(null);
+      setIsSaving(false);
     }
   };
 
   return (
-    <div className="flex max-h-[90dvh] flex-col ">
+    <div className="relative flex max-h-[90dvh] min-h-0 flex-col">
       <header className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
         <h2 className="text-lg font-semibold text-foreground">
-          Edit Exercise Group
+          {isCreateMode ? "Create Exercise Group" : "Edit Exercise Group"}
         </h2>
 
         <p className="mt-1 text-sm text-secondary">
-          Add or remove exercises from this group.
+          Add, remove, and arrange exercises before saving.
         </p>
       </header>
 
-      <div className="px-4 py-4 sm:px-6">
-        <SelectedExercisesSection
-          disabled={Boolean(removingExerciseId)}
-          exercises={selectedExercises}
-          onRemove={handleRemoveExercise}
-          onAddClick={() => {
-            document.getElementById("exercise-library")?.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
-          }}
-        />
+      <div className="min-h-0 flex-1 overflow-y-auto pb-24">
+        {!isCreateMode && !groupId && (
+          <div className="px-4 py-6 sm:px-6">
+            <p className="text-sm text-red-500">
+              Exercise Group ID is missing.
+            </p>
+          </div>
+        )}
 
-        {removingExerciseId && (
-          <p className="mt-3 text-xs text-secondary">
-            Removing exercise and its sets...
+        {isLoading && (
+          <p className="px-4 py-6 text-sm text-secondary sm:px-6">
+            Loading exercises...
           </p>
+        )}
+
+        {loadError && (
+          <div className="px-4 py-6 sm:px-6">
+            <p className="text-sm text-red-500">Failed to load exercises.</p>
+
+            <button
+              type="button"
+              onClick={() => exercisesQuery.refetch()}
+              className="mt-2 text-sm font-medium text-primary"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
+        {!isLoading && !loadError && (isCreateMode || Boolean(groupId)) && (
+          <>
+            <div className="px-4 py-4 sm:px-6">
+              <SelectedExercisesSection
+                exercises={selectedExercises}
+                disabled={isSaving}
+                onRemove={handleRemoveExercise}
+                onReorder={handleReorderExercises}
+                onAddClick={() => {
+                  document.getElementById("exercise-library")?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }}
+              />
+            </div>
+
+            <div
+              id="exercise-library"
+              className="scroll-mt-4 border-t border-border px-4 py-5 sm:px-6"
+            >
+              <ExerciseLibraryPicker
+                selectedExercises={selectedExercises}
+                onSelect={handleAddExercise}
+              />
+            </div>
+          </>
         )}
       </div>
 
       <div
-        id="exercise-library"
-        className="scroll-mt-4 border-t border-border px-4 py-5 sm:px-6"
+        className={[
+          "fixed inset-x-0 bottom-0 z-navigation border-t border-border",
+          "bg-surface px-4 py-3 shadow-lg transition-all duration-300 sm:px-6",
+          hasChanges
+            ? "translate-y-0 opacity-100"
+            : "pointer-events-none translate-y-full opacity-0",
+        ].join(" ")}
+        aria-hidden={!hasChanges}
       >
-        <ExerciseLibraryPicker
-          selectedExercises={selectedExercises}
-          onSelect={handleAddExercise}
-        />
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground">
+              {isCreateMode ? "New exercise group" : "Unsaved changes"}
+            </p>
+
+            <p className="text-xs text-secondary">
+              {selectedExercises.length} exercises selected
+            </p>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              disabled={isSaving || isCreateMode}
+              onClick={handleDiscard}
+              className="rounded-lg px-3 py-2 text-sm font-medium text-secondary disabled:opacity-50"
+            >
+              Discard
+            </button>
+
+            <button
+              type="button"
+              disabled={
+                isSaving ||
+                isLoading ||
+                loadError ||
+                (!isCreateMode && !groupId)
+              }
+              onClick={handleSaveChanges}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSaving ? "Saving..." : "Save changes"}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
