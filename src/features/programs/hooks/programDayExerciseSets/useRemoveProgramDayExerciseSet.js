@@ -8,17 +8,22 @@ export const useRemoveProgramDayExerciseSet = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ groupId, exerciseId }) =>
-      removeProgramDayExerciseSets({ groupId, exerciseId }),
+    mutationFn: ({ programDayExerciseId }) =>
+      removeProgramDayExerciseSets(programDayExerciseId),
 
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["programDayExerciseSets", user?.id, variables.exerciseId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["programDayStructure", user?.id, variables.programDayId],
-      });
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: [
+            "programDayExerciseSets",
+            user?.id,
+            variables.programDayExerciseId,
+          ],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["programDayStructure", user?.id, variables.programDayId],
+        }),
+      ]);
     },
   });
 };
