@@ -11,7 +11,7 @@ import { normalizeExerciseGroup } from "../utils/programDayDetails.utils";
 import ProgramDayFormModal from "../components/program-days/ProgramDayFormModal";
 import ProgramDayDetailsHeader from "../components/program-days/ProgramDayDetailsHeader";
 import TrainingBlocksSection from "../components/program-days/TrainingBlocksSection";
-import SelectExerciseModal from "@/features/programs/components/selectexercisemodal/ExerciseGroupFormModal";
+import ExerciseGroupFormModal from "@/features/programs/components/selectexercisemodal/ExerciseGroupFormModal";
 
 export default function ProgramDayDetailsPage() {
   const navigate = useNavigate();
@@ -112,7 +112,7 @@ export default function ProgramDayDetailsPage() {
         notify={notify}
       />
 
-      <SelectExerciseModal
+      <ExerciseGroupFormModal
         isOpen={Boolean(exerciseGroupToEdit)}
         exerciseGroup={exerciseGroupToEdit}
         onClose={handleCloseExerciseGroup}
