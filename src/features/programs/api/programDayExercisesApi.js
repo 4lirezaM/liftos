@@ -26,6 +26,33 @@ export const getProgramDayExercises = async (groupId) => {
 };
 
 /**
+ * Get exercises belonging to a specific exercise group.
+ *
+ * @param {string} groupId
+ * @returns {Promise<Object[]>}
+ */
+export const getProgramDayExercisesByGroupId = async (groupId) => {
+  if (!groupId) {
+    throw new Error("Group ID is required");
+  }
+
+  const { data, error } = await supabase
+    .from("program_day_exercises")
+    .select(
+      `
+      *,
+      exercise:exercises (*)
+    `
+    )
+    .eq("group_id", groupId)
+    .order("position", { ascending: true });
+
+  if (error) throw error;
+
+  return data;
+};
+
+/**
  * Get a single exercise record by its ID.
  *
  * @param {string} programDayExerciseId - The record's ID.
@@ -136,6 +163,13 @@ export const updateProgramDayExercise = async (
  * @returns {Promise<void>} Resolves when the record has been deleted.
  * @throws {Error} If the deletion fails.
  */
+
+/**
+ * Remove an exercise record from an exercise group.
+ *
+ * @param {string} exerciseRecordId
+ * @returns {Promise<void>}
+ */
 export const removeProgramDayExercise = async (exerciseRecordId) => {
   if (!exerciseRecordId) {
     throw new Error("Program Day Exercise ID is required");
@@ -145,6 +179,33 @@ export const removeProgramDayExercise = async (exerciseRecordId) => {
     .from("program_day_exercises")
     .delete()
     .eq("id", exerciseRecordId);
+
+  if (error) throw error;
+};
+
+export const reorderProgramDayExercises = async ({
+  groupId,
+  exerciseRecordIds,
+}) => {
+  if (!groupId) {
+    throw new Error("Exercise Group ID is required");
+  }
+
+  if (!Array.isArray(exerciseRecordIds)) {
+    throw new Error("Exercise record IDs must be an array");
+  }
+
+  if (
+    exerciseRecordIds.some((id) => !id) ||
+    new Set(exerciseRecordIds).size !== exerciseRecordIds.length
+  ) {
+    throw new Error("Exercise record IDs must be valid and unique");
+  }
+
+  const { error } = await supabase.rpc("reorder_program_day_exercises", {
+    p_group_id: groupId,
+    p_exercise_record_ids: exerciseRecordIds,
+  });
 
   if (error) throw error;
 };
