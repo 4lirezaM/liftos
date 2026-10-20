@@ -45,41 +45,25 @@ export const getProgramDayExerciseGroup = async (groupId) => {
 };
 
 /**
- * Create a new exercise group.
+ * Create a new exercise group at the end of a program day.
+ *
+ * Position is assigned atomically by the database.
  *
  * @param {Object} group
  * @param {string} group.program_day_id
- * @param {string} group.group_type
- * @param {number} group.position
- *
  * @returns {Promise<Object>}
  */
-export const createProgramDayExerciseGroup = async ({
-  program_day_id,
-  group_type,
-  position,
-}) => {
+export const createProgramDayExerciseGroup = async ({ program_day_id }) => {
   if (!program_day_id) {
     throw new Error("Program Day ID is required");
   }
 
-  if (!group_type) {
-    throw new Error("Exercise Group type is required");
-  }
-
-  if (position === undefined || position === null) {
-    throw new Error("Exercise Group position is required");
-  }
-
-  const { data, error } = await supabase
-    .from("program_day_exercise_groups")
-    .insert({
-      program_day_id,
-      group_type,
-      position,
-    })
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc(
+    "create_program_day_exercise_group",
+    {
+      p_program_day_id: program_day_id,
+    }
+  );
 
   if (error) throw error;
 
