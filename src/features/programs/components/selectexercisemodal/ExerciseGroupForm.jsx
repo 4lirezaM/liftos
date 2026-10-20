@@ -314,6 +314,7 @@ export default function ExerciseGroupForm({
         groupId: targetGroupId,
         exercises: orderedFinalExercises,
       });
+      onClose?.();
     } catch (error) {
       console.error("Failed to save exercise group:", error);
 
