@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/features/auth";
 import SelectedExercisesSection from "./selected-exercises/SelectedExercisesSection";
 import ExerciseLibraryPicker from "./selected-exercises/ExerciseLibraryPicker";
 
@@ -65,7 +66,8 @@ export default function ExerciseGroupForm({
   notify,
 }) {
   const isCreateMode = mode === "create";
-
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [selectedExercises, setSelectedExercises] = useState([]);
   const [originalExercises, setOriginalExercises] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -191,7 +193,6 @@ export default function ExerciseGroupForm({
       }
 
       const originalByLibraryId = createExerciseMaps(originalExercises);
-
       const selectedByLibraryId = createExerciseMaps(selectedExercises);
 
       const removedExercises = originalExercises.filter(
@@ -203,7 +204,6 @@ export default function ExerciseGroupForm({
       );
 
       // 2. Remove sets before removing their parent exercise records.
-      // Exercises that remain selected are not touched, so their sets persist.
       for (const exercise of removedExercises) {
         if (!exercise.id) {
           throw new Error(
@@ -212,6 +212,7 @@ export default function ExerciseGroupForm({
             }.`
           );
         }
+
         await removeSetsMutation.mutateAsync({
           programDayExerciseId: exercise.id,
           programDayId,
@@ -243,8 +244,7 @@ export default function ExerciseGroupForm({
         });
       }
 
-      // 4. Fetch persisted records. Reordering must use record IDs,
-      // not exercise-library IDs or temporary UI IDs.
+      // 4. Fetch persisted records to obtain their actual database IDs.
       const persistedRecords = (
         await getProgramDayExercisesByGroupId(targetGroupId)
       ).map(normalizeExercise);
@@ -265,7 +265,7 @@ export default function ExerciseGroupForm({
         return persisted.id;
       });
 
-      // An empty list is valid after removing all exercises.
+      // 5. Persist the selected order.
       if (orderedRecordIds.length > 0) {
         await reorderMutation.mutateAsync({
           groupId: targetGroupId,
@@ -274,7 +274,7 @@ export default function ExerciseGroupForm({
         });
       }
 
-      // 5. Re-fetch the final saved order and update the local baseline.
+      // 6. Fetch the final saved state.
       const finalRecords = (
         await getProgramDayExercisesByGroupId(targetGroupId)
       ).map(normalizeExercise);
@@ -298,6 +298,16 @@ export default function ExerciseGroupForm({
       setOriginalExercises(orderedFinalExercises);
       setSelectedExercises(orderedFinalExercises);
 
+      // 7. Refresh the relevant React Query caches.
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["program-day-exercises", "group", targetGroupId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["programDayStructure", user?.id, programDayId],
+        }),
+      ]);
+
       notify?.("Exercise group saved successfully.", "success");
 
       onSaved?.({
@@ -307,8 +317,6 @@ export default function ExerciseGroupForm({
     } catch (error) {
       console.error("Failed to save exercise group:", error);
 
-      // Preserve the user's draft. Reloading the baseline helps the form
-      // distinguish persisted changes from remaining local changes.
       if (targetGroupId && !isCreateMode) {
         try {
           const persistedRecords = (
