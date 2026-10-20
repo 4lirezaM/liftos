@@ -42,8 +42,11 @@ export default function SelectedExerciseCard({
   );
 
   const name = exercise.name ?? exercise.exercise?.name ?? "Exercise";
-  const mediaUrl = exercise.media_url ?? exercise.exercise?.media_url;
-
+  const mediaUrl =
+    exercise.media_url ??
+    exercise.exercise?.media_url ??
+    exercise.thumbnail_url ??
+    exercise.exercise?.thumbnail_url;
   return (
     <article
       ref={setNodeRef}
