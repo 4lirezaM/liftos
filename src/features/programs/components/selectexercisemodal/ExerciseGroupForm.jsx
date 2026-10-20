@@ -156,20 +156,28 @@ export default function ExerciseGroupForm({
     }
 
     if (!programDayId) {
-      notify?.("Program Day ID is missing.", "error");
+      notify?.({
+        message: "Program Day ID is missing.",
+        type: "error",
+      });
       return;
     }
 
     if (isCreateMode && !groupType) {
-      notify?.("Exercise Group type is required.", "error");
+      notify?.({
+        message: "Exercise Group type is required.",
+        type: "error",
+      });
       return;
     }
 
     if (!isCreateMode && !groupId) {
-      notify?.("Exercise Group ID is missing.", "error");
+      notify?.({
+        message: "Exercise Group ID is missing.",
+        type: "error",
+      });
       return;
     }
-
     setIsSaving(true);
 
     let targetGroupId = groupId;
@@ -307,8 +315,10 @@ export default function ExerciseGroupForm({
           queryKey: ["programDayStructure", user?.id, programDayId],
         }),
       ]);
-
-      notify?.("Exercise group saved successfully.", "success");
+      notify?.({
+        message: "Exercise group saved successfully.",
+        type: "success",
+      });
 
       onSaved?.({
         groupId: targetGroupId,
@@ -330,11 +340,12 @@ export default function ExerciseGroupForm({
         }
       }
 
-      notify?.(
-        error?.message ??
+      notify?.({
+        message:
+          error?.message ??
           "Saving failed. Your current selection has been preserved.",
-        "error"
-      );
+        type: "error",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -451,7 +462,7 @@ export default function ExerciseGroupForm({
                 (!isCreateMode && !groupId)
               }
               onClick={handleSaveChanges}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold dark:text-slate-950 text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving ? "Saving..." : "Save changes"}
             </button>
