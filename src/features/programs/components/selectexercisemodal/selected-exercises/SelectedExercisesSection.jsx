@@ -2,10 +2,10 @@ import { useMemo } from "react";
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import {
   SortableContext,
-  verticalListSortingStrategy,
   rectSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
+import { restrictToParentElement } from "@dnd-kit/modifiers";
 import { Plus } from "lucide-react";
 
 import SelectedExerciseCard from "./SelectedExerciseCard";
@@ -35,12 +35,13 @@ export default function SelectedExercisesSection({
   };
 
   return (
-    <section className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div>
+    <section className="min-w-0 space-y-3">
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <div className="min-w-0">
           <h3 className="text-sm font-semibold text-foreground">
             Selected Exercises
           </h3>
+
           <p className="mt-1 text-xs text-secondary">
             {exercises.length} exercises selected · Drag to reorder
           </p>
@@ -66,6 +67,7 @@ export default function SelectedExercisesSection({
           <p className="mt-3 text-sm font-medium text-foreground">
             No exercises added
           </p>
+
           <p className="mt-1 max-w-xs text-xs leading-5 text-secondary">
             Select exercises from the library below to add them to this group.
           </p>
@@ -82,10 +84,11 @@ export default function SelectedExercisesSection({
       ) : (
         <DndContext
           collisionDetection={closestCenter}
+          modifiers={[restrictToParentElement]}
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={exerciseIds} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
               {exercises.map((exercise) => (
                 <SelectedExerciseCard
                   key={getLibraryId(exercise)}

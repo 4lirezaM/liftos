@@ -52,7 +52,7 @@ export default function SelectedExerciseCard({
         transition,
       }}
       className={[
-        "group relative flex min-w-0 gap-2 rounded-xl border border-border",
+        "group relative flex items-center min-w-0 gap-2 rounded-xl border border-border",
         "bg-surface p-3 transition-colors hover:border-primary/40",
         isDragging ? "z-10 opacity-80 shadow-xl" : "",
       ].join(" ")}
@@ -64,7 +64,7 @@ export default function SelectedExerciseCard({
         disabled={disabled}
         aria-label={`Reorder ${name}`}
         title="Drag to reorder"
-        className="flex min-h-10 w-7 shrink-0 touch-none items-center justify-center self-center rounded-md text-secondary hover:bg-surface-secondary disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex min-h-10 w-7 shrink-0 touch-none cursor-grab items-center justify-center self-center rounded-md text-secondary hover:bg-surface-secondary active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
       >
         <GripVertical size={18} />
       </button>
