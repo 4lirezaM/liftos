@@ -1,9 +1,10 @@
-import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Dumbbell, Plus } from "lucide-react";
 
 import { useNotification } from "@/shared/ui/notification/NotificationProvider";
 import BackButton from "@/shared/ui/backbutton/BackButton";
+import ExerciseGroupFormModal from "@/features/programs/components/selectexercisemodal/ExerciseGroupFormModal";
 
 import { useProgramDayStructure } from "../hooks/programDays/useProgramDayStructure";
 import { normalizeExerciseGroup } from "../utils/programDayDetails.utils";
@@ -11,7 +12,6 @@ import { normalizeExerciseGroup } from "../utils/programDayDetails.utils";
 import ProgramDayFormModal from "../components/program-days/ProgramDayFormModal";
 import ProgramDayDetailsHeader from "../components/program-days/ProgramDayDetailsHeader";
 import TrainingBlocksSection from "../components/program-days/TrainingBlocksSection";
-import ExerciseGroupFormModal from "@/features/programs/components/selectexercisemodal/ExerciseGroupFormModal";
 
 export default function ProgramDayDetailsPage() {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ export default function ProgramDayDetailsPage() {
   const { notify } = useNotification();
 
   const [programDayToEdit, setProgramDayToEdit] = useState(null);
-  const [exerciseGroupToEdit, setExerciseGroupToEdit] = useState(null);
+  const [exerciseGroupModal, setExerciseGroupModal] = useState(null);
 
   const {
     data: rawGroups = [],
@@ -45,19 +45,25 @@ export default function ProgramDayDetailsPage() {
   };
 
   const handleEditGroup = (group) => {
-    setExerciseGroupToEdit(group);
+    setExerciseGroupModal({
+      mode: "edit",
+      group,
+    });
+  };
+
+  const handleAddGroup = () => {
+    setExerciseGroupModal({
+      mode: "create",
+      group: null,
+    });
   };
 
   const handleCloseExerciseGroup = () => {
-    setExerciseGroupToEdit(null);
+    setExerciseGroupModal(null);
   };
 
   const handleDeleteGroup = (group) => {
     console.info("Delete training block — mutation not implemented:", group);
-  };
-
-  const handleAddGroup = () => {
-    console.info("Add training block for program day:", dayId);
   };
 
   return (
@@ -113,9 +119,12 @@ export default function ProgramDayDetailsPage() {
       />
 
       <ExerciseGroupFormModal
-        isOpen={Boolean(exerciseGroupToEdit)}
-        exerciseGroup={exerciseGroupToEdit}
+        isOpen={Boolean(exerciseGroupModal)}
+        mode={exerciseGroupModal?.mode ?? "edit"}
+        exerciseGroup={exerciseGroupModal?.group ?? null}
+        programDayId={dayId}
         onClose={handleCloseExerciseGroup}
+        onSaved={refetch}
         notify={notify}
       />
     </main>

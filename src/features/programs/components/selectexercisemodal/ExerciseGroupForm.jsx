@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+
 import { useAuth } from "@/features/auth";
+
 import SelectedExercisesSection from "./selected-exercises/SelectedExercisesSection";
 import ExerciseLibraryPicker from "./selected-exercises/ExerciseLibraryPicker";
 
@@ -14,16 +16,15 @@ import { useReorderProgramDayExercises } from "@/features/programs/hooks/program
 import { getProgramDayExercisesByGroupId } from "@/features/programs/api/programDayExercisesApi";
 
 /**
- * Returns the ID of the underlying exercise from the library.
- * `id` may instead refer to a program_day_exercises record.
+ * Returns the ID of the underlying library exercise.
+ * `id` may refer to a saved program-day exercise record.
  */
 function getLibraryId(exercise) {
   return exercise.exercise_id ?? exercise.exercise?.id ?? exercise.id;
 }
 
 /**
- * Normalizes library exercises and saved program-day exercise records
- * into a consistent shape for the form.
+ * Normalizes library exercises and saved program-day exercise records.
  */
 function normalizeExercise(exercise) {
   const libraryExercise = exercise.exercise ?? exercise;
@@ -60,14 +61,15 @@ export default function ExerciseGroupForm({
   exerciseGroup,
   groupId = exerciseGroup?.id,
   programDayId = exerciseGroup?.program_day_id,
-  groupType,
   onClose,
   onSaved,
   notify,
 }) {
   const isCreateMode = mode === "create";
+
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
   const [selectedExercises, setSelectedExercises] = useState([]);
   const [originalExercises, setOriginalExercises] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -88,14 +90,13 @@ export default function ExerciseGroupForm({
   const loadError = !isCreateMode && exercisesQuery.isError;
 
   const hasChanges = useMemo(() => {
-    // A new group itself is a change, even when it contains no exercises.
+    // Creating a group is a change even when no exercises are selected.
     if (isCreateMode) return true;
 
     return !haveSameOrder(originalExercises, selectedExercises);
   }, [isCreateMode, originalExercises, selectedExercises]);
 
-  // Initialize the edit draft from the server without overwriting
-  // unsaved local edits when the query refetches.
+  // Initialize edit state from the server.
   useEffect(() => {
     if (isCreateMode) {
       setOriginalExercises([]);
@@ -110,6 +111,7 @@ export default function ExerciseGroupForm({
     setOriginalExercises(normalized);
     setSelectedExercises(normalized);
   }, [isCreateMode, groupId, exercisesQuery.data]);
+
   const handleAddExercise = useCallback((exercise) => {
     const normalized = normalizeExercise(exercise);
     const libraryId = getLibraryId(normalized);
@@ -129,7 +131,7 @@ export default function ExerciseGroupForm({
           group_id: null,
           position: null,
 
-          // This is a temporary UI ID, not a persisted record ID.
+          // Temporary UI ID; not a persisted record ID.
           id: libraryId,
         },
       ];
@@ -151,21 +153,11 @@ export default function ExerciseGroupForm({
   }, [originalExercises]);
 
   const handleSaveChanges = async () => {
-    if (!hasChanges || isSaving || isLoading || loadError) {
-      return;
-    }
+    if (!hasChanges || isSaving || isLoading || loadError) return;
 
     if (!programDayId) {
       notify?.({
         message: "Program Day ID is missing.",
-        type: "error",
-      });
-      return;
-    }
-
-    if (isCreateMode && !groupType) {
-      notify?.({
-        message: "Exercise Group type is required.",
         type: "error",
       });
       return;
@@ -178,17 +170,19 @@ export default function ExerciseGroupForm({
       });
       return;
     }
+
     setIsSaving(true);
 
     let targetGroupId = groupId;
+    let createdNewGroup = false;
 
     try {
-      // 1. Create the group only when the user saves.
+      // 1. Create a group without group_type.
+      // The database defaults it to "single".
+      // Its trigger recalculates the type as exercises are added.
       if (isCreateMode) {
         const createdGroup = await createGroupMutation.mutateAsync({
           program_day_id: programDayId,
-          group_type: groupType,
-          position: exerciseGroup?.position ?? 1,
         });
 
         if (!createdGroup?.id) {
@@ -198,6 +192,7 @@ export default function ExerciseGroupForm({
         }
 
         targetGroupId = createdGroup.id;
+        createdNewGroup = true;
       }
 
       const originalByLibraryId = createExerciseMaps(originalExercises);
@@ -252,7 +247,7 @@ export default function ExerciseGroupForm({
         });
       }
 
-      // 4. Fetch persisted records to obtain their actual database IDs.
+      // 4. Fetch persisted records to obtain actual database IDs.
       const persistedRecords = (
         await getProgramDayExercisesByGroupId(targetGroupId)
       ).map(normalizeExercise);
@@ -282,7 +277,7 @@ export default function ExerciseGroupForm({
         });
       }
 
-      // 6. Fetch the final saved state.
+      // 6. Fetch the final persisted state.
       const finalRecords = (
         await getProgramDayExercisesByGroupId(targetGroupId)
       ).map(normalizeExercise);
@@ -314,7 +309,11 @@ export default function ExerciseGroupForm({
         queryClient.invalidateQueries({
           queryKey: ["programDayStructure", user?.id, programDayId],
         }),
+        queryClient.invalidateQueries({
+          queryKey: ["programDayExerciseGroups", user?.id, programDayId],
+        }),
       ]);
+
       notify?.({
         message: "Exercise group saved successfully.",
         type: "success",
@@ -324,11 +323,14 @@ export default function ExerciseGroupForm({
         groupId: targetGroupId,
         exercises: orderedFinalExercises,
       });
+
       onClose?.();
     } catch (error) {
       console.error("Failed to save exercise group:", error);
 
-      if (targetGroupId && !isCreateMode) {
+      // For existing groups, restore the local draft to persisted state.
+      // For a newly created group, preserve the user's current selection.
+      if (targetGroupId && !createdNewGroup) {
         try {
           const persistedRecords = (
             await getProgramDayExercisesByGroupId(targetGroupId)
@@ -338,6 +340,19 @@ export default function ExerciseGroupForm({
         } catch (refreshError) {
           console.error("Failed to refresh persisted exercises:", refreshError);
         }
+      }
+
+      // A newly created group may already exist if adding exercises failed.
+      // Refresh its parent structure so the UI can reflect the actual DB state.
+      if (createdNewGroup) {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: ["programDayStructure", user?.id, programDayId],
+          }),
+          queryClient.invalidateQueries({
+            queryKey: ["programDayExerciseGroups", user?.id, programDayId],
+          }),
+        ]);
       }
 
       notify?.({
@@ -363,7 +378,7 @@ export default function ExerciseGroupForm({
         </p>
       </header>
 
-      <div className="min-h-0 flex-1  pb-24">
+      <div className="min-h-0 flex-1 pb-24">
         {!isCreateMode && !groupId && (
           <div className="px-4 py-6 sm:px-6">
             <p className="text-sm text-red-500">
@@ -462,7 +477,7 @@ export default function ExerciseGroupForm({
                 (!isCreateMode && !groupId)
               }
               onClick={handleSaveChanges}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold dark:text-slate-950 text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-950"
             >
               {isSaving ? "Saving..." : "Save changes"}
             </button>
