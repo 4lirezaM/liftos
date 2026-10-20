@@ -1,13 +1,49 @@
 import { supabase } from "@/config/supabase";
+import { getExerciseMediaUrls } from "@/config/storage";
+
+/**
+ * Resolve media paths for exercises and return signed URLs.
+ *
+ * @param {Object[]} records - Program day exercise records.
+ * @returns {Promise<Object[]>}
+ */
+const attachExerciseMediaUrls = async (records) => {
+  const mediaPaths = [
+    ...new Set(
+      records
+        .flatMap(({ exercise }) => [
+          exercise?.media_path,
+          exercise?.thumbnail_path,
+        ])
+        .filter(Boolean)
+    ),
+  ];
+
+  const mediaUrls = await getExerciseMediaUrls(mediaPaths);
+
+  return records.map((record) => {
+    if (!record.exercise) {
+      return record;
+    }
+
+    const exercise = record.exercise;
+
+    return {
+      ...record,
+      exercise: {
+        ...exercise,
+        media_url: mediaUrls[exercise.media_path] ?? null,
+        thumbnail_url: mediaUrls[exercise.thumbnail_path] ?? null,
+      },
+    };
+  });
+};
 
 /**
  * Get all exercises belonging to an exercise group.
  *
- * Exercises are returned in their configured order.
- *
- * @param {string} groupId - The exercise group's ID.
- * @returns {Promise<Object[]>} The list of exercise records.
- * @throws {Error} If the group ID is missing or the database request fails.
+ * @param {string} groupId
+ * @returns {Promise<Object[]>}
  */
 export const getProgramDayExercises = async (groupId) => {
   if (!groupId) {
@@ -26,7 +62,7 @@ export const getProgramDayExercises = async (groupId) => {
 };
 
 /**
- * Get exercises belonging to a specific exercise group.
+ * Get exercises belonging to a group with their library data and signed media URLs.
  *
  * @param {string} groupId
  * @returns {Promise<Object[]>}
@@ -49,15 +85,14 @@ export const getProgramDayExercisesByGroupId = async (groupId) => {
 
   if (error) throw error;
 
-  return data;
+  return attachExerciseMediaUrls(data);
 };
 
 /**
- * Get a single exercise record by its ID.
+ * Get a single exercise record with its library data and signed media URLs.
  *
- * @param {string} programDayExerciseId - The record's ID.
- * @returns {Promise<Object>} The exercise record.
- * @throws {Error} If the ID is missing or the record cannot be retrieved.
+ * @param {string} programDayExerciseId
+ * @returns {Promise<Object>}
  */
 export const getProgramDayExercise = async (programDayExerciseId) => {
   if (!programDayExerciseId) {
@@ -66,27 +101,30 @@ export const getProgramDayExercise = async (programDayExerciseId) => {
 
   const { data, error } = await supabase
     .from("program_day_exercises")
-    .select("*")
+    .select(
+      `
+      *,
+      exercise:exercises (*)
+    `
+    )
     .eq("id", programDayExerciseId)
     .single();
 
   if (error) throw error;
 
-  return data;
+  const [record] = await attachExerciseMediaUrls([data]);
+
+  return record;
 };
 
 /**
  * Add an exercise to an exercise group.
  *
- * The database function assigns the exercise's position.
- * Empty notes are stored as null.
- *
- * @param {Object} params - The exercise record parameters.
- * @param {string} params.group_id - The target exercise group's ID.
- * @param {string} params.exercise_id - The exercise library record's ID.
- * @param {string|null} [params.notes=null] - Optional exercise notes.
- * @returns {Promise<Object>} The created exercise record.
- * @throws {Error} If required parameters are missing or the request fails.
+ * @param {Object} params
+ * @param {string} params.group_id
+ * @param {string} params.exercise_id
+ * @param {string|null} [params.notes=null]
+ * @returns {Promise<Object>}
  */
 export const addProgramDayExercise = async ({
   group_id,
@@ -115,13 +153,9 @@ export const addProgramDayExercise = async ({
 /**
  * Update an existing exercise record.
  *
- * Only the provided fields are updated.
- * Empty notes are normalized to null.
- *
- * @param {string} programDayExerciseId - The record's ID.
- * @param {Object} updates - The fields to update.
- * @returns {Promise<Object>} The updated exercise record.
- * @throws {Error} If the ID is missing or the update fails.
+ * @param {string} programDayExerciseId
+ * @param {Object} updates
+ * @returns {Promise<Object>}
  */
 export const updateProgramDayExercise = async (
   programDayExerciseId,
@@ -137,7 +171,6 @@ export const updateProgramDayExercise = async (
 
   const payload = { ...updates };
 
-  // Normalize notes only when the caller explicitly provides this field.
   if (payload.notes !== undefined) {
     payload.notes = payload.notes?.trim() || null;
   }
@@ -155,17 +188,7 @@ export const updateProgramDayExercise = async (
 };
 
 /**
- * Remove an exercise record from an exercise group.
- *
- * This deletes the association record, not the exercise from the library.
- *
- * @param {string} exerciseRecordId - The program day exercise record's ID.
- * @returns {Promise<void>} Resolves when the record has been deleted.
- * @throws {Error} If the deletion fails.
- */
-
-/**
- * Remove an exercise record from an exercise group.
+ * Remove an exercise record from a group.
  *
  * @param {string} exerciseRecordId
  * @returns {Promise<void>}
@@ -183,6 +206,14 @@ export const removeProgramDayExercise = async (exerciseRecordId) => {
   if (error) throw error;
 };
 
+/**
+ * Reorder exercises within a group.
+ *
+ * @param {Object} params
+ * @param {string} params.groupId
+ * @param {string[]} params.exerciseRecordIds
+ * @returns {Promise<void>}
+ */
 export const reorderProgramDayExercises = async ({
   groupId,
   exerciseRecordIds,
