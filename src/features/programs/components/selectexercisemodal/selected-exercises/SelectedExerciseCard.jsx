@@ -2,7 +2,6 @@ import { GripVertical, X } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import Tag from "./Tag";
 import { formatLabel } from "@/features/programs/utils/programDayDetails.utils";
 
 function normalizeArray(value) {
@@ -20,7 +19,6 @@ export default function SelectedExerciseCard({
 }) {
   const sortableId =
     exercise.exercise_id ?? exercise.exercise?.id ?? exercise.id;
-
   const {
     attributes,
     listeners,

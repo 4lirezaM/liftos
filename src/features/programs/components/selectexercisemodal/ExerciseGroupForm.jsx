@@ -32,7 +32,9 @@ function normalizeExercise(exercise) {
     ...exercise,
     exercise_id: getLibraryId(exercise),
     name: exercise.name ?? libraryExercise.name,
-    media_url: exercise.media_url ?? libraryExercise.media_url,
+    media_url: exercise.media_url ?? libraryExercise.media_url ?? null,
+    thumbnail_url:
+      exercise.thumbnail_url ?? libraryExercise.thumbnail_url ?? null,
     group_id: exercise.group_id ?? null,
     position: exercise.position ?? null,
   };
