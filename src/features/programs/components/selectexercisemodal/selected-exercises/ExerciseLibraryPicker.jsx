@@ -165,9 +165,9 @@ export default function ExerciseLibraryPicker({
                         : "cursor-pointer border-border hover:border-primary/60 hover:bg-surface-secondary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                     }`}
                   >
-                    {exercise.media_url ? (
+                    {exercise.media_url || exercise.thumbnail_url ? (
                       <img
-                        src={exercise.media_url}
+                        src={exercise.media_url || exercise.thumbnail_url}
                         alt=""
                         loading="lazy"
                         className="size-16 shrink-0 rounded-lg bg-surface-secondary object-contain"
